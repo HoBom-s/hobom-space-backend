@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HobomAdmin.Api/HobomAdmin.Api.csproj" />
+    <Project Path="src/HobomAdmin.Application/HobomAdmin.Application.csproj" />
+    <Project Path="src/HobomAdmin.Domain/HobomAdmin.Domain.csproj" />
+    <Project Path="src/HobomAdmin.Infrastructure/HobomAdmin.Infrastructure.csproj" />
+  </Folder>
+</Solution>
