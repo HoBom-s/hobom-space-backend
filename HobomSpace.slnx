@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HobomSpace.Api/HobomSpace.Api.csproj" />
+    <Project Path="src/HobomSpace.Application/HobomSpace.Application.csproj" />
+    <Project Path="src/HobomSpace.Domain/HobomSpace.Domain.csproj" />
+    <Project Path="src/HobomSpace.Infrastructure/HobomSpace.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/solution-items/">
+    <File Path=".gitignore" />
+  </Folder>
+</Solution>
