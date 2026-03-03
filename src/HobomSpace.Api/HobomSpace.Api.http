@@ -1,0 +1,6 @@
+@HobomSpace.Api_HostAddress = http://localhost:5254
+
+GET {{HobomSpace.Api_HostAddress}}/health
+Accept: application/json
+
+###

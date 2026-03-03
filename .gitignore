@@ -5,4 +5,12 @@ obj/
 .vs/
 .idea/
 *.DotSettings.user
-appsettings.*.local.json
+appsettings.*.json
+
+# Build
+publish/
+*.nupkg
+
+# OS
+.DS_Store
+Thumbs.db
