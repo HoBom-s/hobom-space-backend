@@ -15,23 +15,23 @@ public static class PageVersionEndpoints
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
             var result = await service.GetHistoryAsync(pageId, offset, limit, ct);
-            return Results.Ok(new PaginatedResponse<PageVersionResponse>(
-                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit));
-        }).Produces<PaginatedResponse<PageVersionResponse>>();
+            return Results.Ok(ApiResponse.Ok(new PaginatedResponse<PageVersionResponse>(
+                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit)));
+        }).Produces<ApiResponse<PaginatedResponse<PageVersionResponse>>>();
 
         group.MapGet("/{version:int}", async (string spaceKey, long pageId, int version,
             IPageService pageService, IPageVersionService service, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
-            return Results.Ok(ToResponse(await service.GetVersionAsync(pageId, version, ct)));
-        }).Produces<PageVersionResponse>();
+            return Results.Ok(ApiResponse.Ok(ToResponse(await service.GetVersionAsync(pageId, version, ct))));
+        }).Produces<ApiResponse<PageVersionResponse>>();
 
         group.MapPost("/{version:int}/restore", async (string spaceKey, long pageId, int version,
             IPageService pageService, IPageVersionService service, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
-            return Results.Ok(ToPageResponse(await service.RestoreVersionAsync(pageId, version, ct)));
-        }).Produces<PageResponse>();
+            return Results.Ok(ApiResponse.Ok(ToPageResponse(await service.RestoreVersionAsync(pageId, version, ct))));
+        }).Produces<ApiResponse<PageResponse>>();
 
         return group;
     }

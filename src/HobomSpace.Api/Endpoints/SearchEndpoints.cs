@@ -13,16 +13,16 @@ public static class SearchEndpoints
         group.MapGet("/", async (string q, ISearchService service, CancellationToken ct, int offset = 0, int limit = 20) =>
         {
             var result = await service.SearchPagesAsync(q, offset, limit, ct);
-            return Results.Ok(new PaginatedResponse<SearchResult>(
-                result.Items.Select(ToResult).ToList(), result.TotalCount, result.Offset, result.Limit));
-        }).Produces<PaginatedResponse<SearchResult>>();
+            return Results.Ok(ApiResponse.Ok(new PaginatedResponse<SearchResult>(
+                result.Items.Select(ToResult).ToList(), result.TotalCount, result.Offset, result.Limit)));
+        }).Produces<ApiResponse<PaginatedResponse<SearchResult>>>();
 
         group.MapGet("/spaces/{spaceKey}", async (string spaceKey, string q, ISearchService service, CancellationToken ct, int offset = 0, int limit = 20) =>
         {
             var result = await service.SearchPagesInSpaceAsync(spaceKey, q, offset, limit, ct);
-            return Results.Ok(new PaginatedResponse<SearchResult>(
-                result.Items.Select(ToResult).ToList(), result.TotalCount, result.Offset, result.Limit));
-        }).Produces<PaginatedResponse<SearchResult>>();
+            return Results.Ok(ApiResponse.Ok(new PaginatedResponse<SearchResult>(
+                result.Items.Select(ToResult).ToList(), result.TotalCount, result.Offset, result.Limit)));
+        }).Produces<ApiResponse<PaginatedResponse<SearchResult>>>();
 
         return group;
     }

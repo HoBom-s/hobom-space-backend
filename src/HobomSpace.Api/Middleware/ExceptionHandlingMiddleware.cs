@@ -1,5 +1,5 @@
+using HobomSpace.Api.Contracts;
 using HobomSpace.Domain.Exceptions;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -21,34 +21,24 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var (statusCode, title) = exception switch
+        var (statusCode, message) = exception switch
         {
-            NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
-            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
-            ArgumentException => (StatusCodes.Status400BadRequest, "Bad Request"),
+            NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+            ConflictException => (StatusCodes.Status409Conflict, exception.Message),
+            ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
             DbUpdateException dbEx when IsUniqueConstraintViolation(dbEx)
-                => (StatusCodes.Status409Conflict, "Conflict"),
-            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error"),
+                => (StatusCodes.Status409Conflict, "Resource already exists."),
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred."),
         };
 
         if (statusCode == StatusCodes.Status500InternalServerError)
             logger.LogError(exception, "Unhandled exception");
         else
-            logger.LogWarning(exception, "{Title}: {Detail}", title, exception.Message);
-
-        var correlationId = context.Items["TraceId"]?.ToString();
+            logger.LogWarning(exception, "{Message}", message);
 
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = statusCode == StatusCodes.Status500InternalServerError
-                ? "An unexpected error occurred."
-                : exception.Message,
-            Extensions = { ["traceId"] = correlationId },
-        });
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(ApiResponse.Error(message));
     }
 
     private static bool IsUniqueConstraintViolation(DbUpdateException ex)

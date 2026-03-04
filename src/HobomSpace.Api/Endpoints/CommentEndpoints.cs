@@ -15,32 +15,32 @@ public static class CommentEndpoints
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
             var comment = await service.CreateAsync(pageId, request.ParentCommentId, request.Content, request.Author, ct);
-            return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{pageId}/comments/{comment.Id}", ToResponse(comment));
-        }).Produces<CommentResponse>(StatusCodes.Status201Created);
+            return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{pageId}/comments/{comment.Id}", ApiResponse.Created(ToResponse(comment)));
+        }).Produces<ApiResponse<CommentResponse>>(StatusCodes.Status201Created);
 
         group.MapGet("/", async (string spaceKey, long pageId,
             IPageService pageService, ICommentService service, CancellationToken ct, int offset = 0, int limit = 20) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
             var result = await service.GetByPageIdAsync(pageId, offset, limit, ct);
-            return Results.Ok(new PaginatedResponse<CommentResponse>(
-                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit));
-        }).Produces<PaginatedResponse<CommentResponse>>();
+            return Results.Ok(ApiResponse.Ok(new PaginatedResponse<CommentResponse>(
+                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit)));
+        }).Produces<ApiResponse<PaginatedResponse<CommentResponse>>>();
 
         group.MapPut("/{commentId:long}", async (string spaceKey, long pageId, long commentId, UpdateCommentRequest request,
             IPageService pageService, ICommentService service, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
-            return Results.Ok(ToResponse(await service.UpdateAsync(commentId, request.Content, ct)));
-        }).Produces<CommentResponse>();
+            return Results.Ok(ApiResponse.Ok(ToResponse(await service.UpdateAsync(commentId, request.Content, ct))));
+        }).Produces<ApiResponse<CommentResponse>>();
 
         group.MapDelete("/{commentId:long}", async (string spaceKey, long pageId, long commentId,
             IPageService pageService, ICommentService service, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
             await service.DeleteAsync(commentId, ct);
-            return Results.NoContent();
-        }).Produces(StatusCodes.Status204NoContent);
+            return Results.Ok(ApiResponse.Ok<object?>(null, "Deleted"));
+        }).Produces<ApiResponse<object>>();
 
         return group;
     }

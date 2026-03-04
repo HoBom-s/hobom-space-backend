@@ -13,26 +13,26 @@ public static class PageEndpoints
         group.MapPost("/", async (string spaceKey, CreatePageRequest request, IPageService service, CancellationToken ct) =>
         {
             var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, ct);
-            return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ToResponse(page));
-        }).Produces<PageResponse>(StatusCodes.Status201Created);
+            return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ApiResponse.Created(ToResponse(page)));
+        }).Produces<ApiResponse<PageResponse>>(StatusCodes.Status201Created);
 
         group.MapGet("/", async (string spaceKey, IPageService service, CancellationToken ct) =>
-            Results.Ok(BuildTree(await service.GetBySpaceKeyAsync(spaceKey, ct))))
-            .Produces<List<PageTreeNode>>();
+            Results.Ok(ApiResponse.Ok(BuildTree(await service.GetBySpaceKeyAsync(spaceKey, ct)))))
+            .Produces<ApiResponse<List<PageTreeNode>>>();
 
         group.MapGet("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.GetByIdAsync(spaceKey, pageId, ct))))
-            .Produces<PageResponse>();
+            Results.Ok(ApiResponse.Ok(ToResponse(await service.GetByIdAsync(spaceKey, pageId, ct)))))
+            .Produces<ApiResponse<PageResponse>>();
 
         group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, ct))))
-            .Produces<PageResponse>();
+            Results.Ok(ApiResponse.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, ct)))))
+            .Produces<ApiResponse<PageResponse>>();
 
         group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
         {
             await service.DeleteAsync(spaceKey, pageId, ct);
-            return Results.NoContent();
-        }).Produces(StatusCodes.Status204NoContent);
+            return Results.Ok(ApiResponse.Ok<object?>(null, "Deleted"));
+        }).Produces<ApiResponse<object>>();
 
         return group;
     }
