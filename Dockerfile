@@ -14,8 +14,8 @@ RUN dotnet publish src/HobomSpace.Api/HobomSpace.Api.csproj -c Release -o /app -
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
 WORKDIR /app
 
-RUN addgroup --system --gid 1001 appgroup && \
-    adduser --system --uid 1001 --ingroup appgroup appuser
+RUN groupadd --system --gid 1001 appgroup && \
+    useradd --system --uid 1001 --gid appgroup --no-create-home appuser
 
 COPY --from=build /app .
 
