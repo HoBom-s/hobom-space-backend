@@ -24,6 +24,7 @@ public sealed class PageVersion
             Title = title,
             Content = content,
             EditedBy = editedBy,
+            CreatedAt = DateTime.UtcNow,
         };
     }
 }

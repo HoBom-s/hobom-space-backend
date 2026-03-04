@@ -12,12 +12,13 @@ public class PageServiceTests
 {
     private readonly ISpaceRepository _spaceRepo = Substitute.For<ISpaceRepository>();
     private readonly IPageRepository _pageRepo = Substitute.For<IPageRepository>();
+    private readonly IPageVersionService _versionService = Substitute.For<IPageVersionService>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly PageService _sut;
 
     public PageServiceTests()
     {
-        _sut = new PageService(_spaceRepo, _pageRepo, _uow);
+        _sut = new PageService(_spaceRepo, _pageRepo, _versionService, _uow);
     }
 
     [Fact]
@@ -118,6 +119,7 @@ public class PageServiceTests
         result.Title.Should().Be("New Title");
         result.Content.Should().Be("New Content");
         result.Position.Should().Be(5);
+        await _versionService.Received(1).SaveVersionAsync(1, Arg.Any<CancellationToken>());
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

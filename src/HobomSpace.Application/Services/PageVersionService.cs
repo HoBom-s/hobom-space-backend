@@ -33,6 +33,7 @@ public sealed class PageVersionService(
 
     public async Task<PaginatedResult<PageVersion>> GetHistoryAsync(long pageId, int offset, int limit, CancellationToken ct = default)
     {
+        (offset, limit) = PaginatedResult<PageVersion>.Clamp(offset, limit);
         var items = await versionRepo.GetByPageIdAsync(pageId, offset, limit, ct);
         var total = await versionRepo.CountByPageIdAsync(pageId, ct);
         return new PaginatedResult<PageVersion>(items, total, offset, limit);

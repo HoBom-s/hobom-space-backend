@@ -13,7 +13,7 @@ public interface IPageService
     Task DeleteAsync(string spaceKey, long pageId, CancellationToken ct = default);
 }
 
-public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository pageRepo, IUnitOfWork uow) : IPageService
+public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository pageRepo, IPageVersionService versionService, IUnitOfWork uow) : IPageService
 {
     public async Task<Page> CreateAsync(string spaceKey, string title, string content, long? parentPageId, int position, CancellationToken ct = default)
     {
@@ -48,6 +48,7 @@ public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository page
     public async Task<Page> UpdateAsync(string spaceKey, long pageId, string title, string content, int? position, CancellationToken ct = default)
     {
         var page = await GetByIdAsync(spaceKey, pageId, ct);
+        await versionService.SaveVersionAsync(pageId, ct);
         page.Update(title, content, position);
         await uow.SaveChangesAsync(ct);
         return page;

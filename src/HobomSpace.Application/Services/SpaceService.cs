@@ -30,6 +30,7 @@ public sealed class SpaceService(ISpaceRepository repo, IUnitOfWork uow) : ISpac
 
     public async Task<PaginatedResult<Space>> GetAllAsync(int offset, int limit, CancellationToken ct = default)
     {
+        (offset, limit) = PaginatedResult<Space>.Clamp(offset, limit);
         var items = await repo.GetAllAsync(offset, limit, ct);
         var total = await repo.CountAsync(ct);
         return new PaginatedResult<Space>(items, total, offset, limit);

@@ -39,6 +39,7 @@ public sealed class CommentService(
 
     public async Task<PaginatedResult<Comment>> GetByPageIdAsync(long pageId, int offset, int limit, CancellationToken ct = default)
     {
+        (offset, limit) = PaginatedResult<Comment>.Clamp(offset, limit);
         var items = await commentRepo.GetByPageIdAsync(pageId, offset, limit, ct);
         var total = await commentRepo.CountByPageIdAsync(pageId, ct);
         return new PaginatedResult<Comment>(items, total, offset, limit);
