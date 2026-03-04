@@ -1,3 +1,4 @@
+using HobomSpace.Application.Models;
 using HobomSpace.Application.Ports;
 using HobomSpace.Domain.Entities;
 using HobomSpace.Domain.Exceptions;
@@ -7,7 +8,7 @@ namespace HobomSpace.Application.Services;
 public interface ISpaceService
 {
     Task<Space> CreateAsync(string key, string name, string? description, CancellationToken ct = default);
-    Task<List<Space>> GetAllAsync(CancellationToken ct = default);
+    Task<PaginatedResult<Space>> GetAllAsync(int offset, int limit, CancellationToken ct = default);
     Task<Space> GetByKeyAsync(string key, CancellationToken ct = default);
     Task<Space> UpdateAsync(string key, string name, string? description, CancellationToken ct = default);
     Task DeleteAsync(string key, CancellationToken ct = default);
@@ -27,8 +28,12 @@ public sealed class SpaceService(ISpaceRepository repo, IUnitOfWork uow) : ISpac
         return space;
     }
 
-    public async Task<List<Space>> GetAllAsync(CancellationToken ct = default)
-        => await repo.GetAllAsync(ct);
+    public async Task<PaginatedResult<Space>> GetAllAsync(int offset, int limit, CancellationToken ct = default)
+    {
+        var items = await repo.GetAllAsync(offset, limit, ct);
+        var total = await repo.CountAsync(ct);
+        return new PaginatedResult<Space>(items, total, offset, limit);
+    }
 
     public async Task<Space> GetByKeyAsync(string key, CancellationToken ct = default)
         => await repo.GetByKeyAsync(key, ct)

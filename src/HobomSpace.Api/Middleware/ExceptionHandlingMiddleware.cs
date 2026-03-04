@@ -1,5 +1,7 @@
 using HobomSpace.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace HobomSpace.Api.Middleware;
 
@@ -24,6 +26,8 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             ArgumentException => (StatusCodes.Status400BadRequest, "Bad Request"),
+            DbUpdateException dbEx when IsUniqueConstraintViolation(dbEx)
+                => (StatusCodes.Status409Conflict, "Conflict"),
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error"),
         };
 
@@ -46,4 +50,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             Extensions = { ["traceId"] = correlationId },
         });
     }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+        => ex.InnerException is PostgresException { SqlState: "23505" };
 }

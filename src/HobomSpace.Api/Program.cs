@@ -4,6 +4,7 @@ using HobomSpace.Api.Middleware;
 using HobomSpace.Application;
 using HobomSpace.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
+using Scalar.AspNetCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,12 +24,34 @@ try
         .WriteTo.Console(outputTemplate:
             "[{Timestamp:HH:mm:ss} {Level:u3}] {TraceId} {Message:lj}{NewLine}{Exception}"));
 
-    builder.Services.AddOpenApi();
+    builder.Services.AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer((document, _, _) =>
+        {
+            var components = document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
+            components.SecuritySchemes ??= new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
+            components.SecuritySchemes["ApiKey"] = new Microsoft.OpenApi.OpenApiSecurityScheme
+            {
+                Type = Microsoft.OpenApi.SecuritySchemeType.ApiKey,
+                Name = "X-Api-Key",
+                In = Microsoft.OpenApi.ParameterLocation.Header,
+                Description = "API key passed via X-Api-Key header",
+            };
+            document.Security ??= [];
+            document.Security.Add(new Microsoft.OpenApi.OpenApiSecurityRequirement
+            {
+                [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKey", document)] = new List<string>()
+            });
+            return Task.CompletedTask;
+        });
+    });
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    builder.Services.AddHealthChecks()
-        .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    var healthChecks = builder.Services.AddHealthChecks();
+    var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrEmpty(dbConnectionString))
+        healthChecks.AddNpgSql(dbConnectionString);
 
     builder.Services.AddCors(options =>
     {
@@ -44,12 +67,15 @@ try
     builder.Services.AddRateLimiter(options =>
     {
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-        options.AddFixedWindowLimiter("fixed", limiter =>
-        {
-            limiter.PermitLimit = 100;
-            limiter.Window = TimeSpan.FromMinutes(1);
-            limiter.QueueLimit = 0;
-        });
+        options.AddPolicy("fixed", context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }));
     });
 
     builder.WebHost.ConfigureKestrel(options =>
@@ -80,11 +106,16 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
+        app.MapScalarApiReference();
     }
 
-    app.MapHealthChecks("/health");
+    app.MapHealthChecks("/health/ready");
+    app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy" }));
     app.MapSpaceEndpoints().RequireRateLimiting("fixed");
     app.MapPageEndpoints().RequireRateLimiting("fixed");
+    app.MapPageVersionEndpoints().RequireRateLimiting("fixed");
+    app.MapCommentEndpoints().RequireRateLimiting("fixed");
+    app.MapSearchEndpoints().RequireRateLimiting("fixed");
 
     Log.Information("Starting HobomSpace API");
     app.Run();
@@ -97,3 +128,5 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+public partial class Program;

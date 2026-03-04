@@ -23,6 +23,53 @@ namespace HobomSpace.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HobomSpace.Domain.Entities.Comment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Author")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("author");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("PageId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("page_id");
+
+                    b.Property<long?>("ParentCommentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("parent_comment_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_comments");
+
+                    b.HasIndex("PageId")
+                        .HasDatabaseName("ix_comments_page_id");
+
+                    b.HasIndex("ParentCommentId")
+                        .HasDatabaseName("ix_comments_parent_comment_id");
+
+                    b.ToTable("comments", "space");
+                });
+
             modelBuilder.Entity("HobomSpace.Domain.Entities.Page", b =>
                 {
                     b.Property<long>("Id")
@@ -77,6 +124,53 @@ namespace HobomSpace.Infrastructure.Migrations
                     b.ToTable("pages", "space");
                 });
 
+            modelBuilder.Entity("HobomSpace.Domain.Entities.PageVersion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EditedBy")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("edited_by");
+
+                    b.Property<long>("PageId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("page_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_page_versions");
+
+                    b.HasIndex("PageId", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("ix_page_versions_page_id_version");
+
+                    b.ToTable("page_versions", "space");
+                });
+
             modelBuilder.Entity("HobomSpace.Domain.Entities.Space", b =>
                 {
                     b.Property<long>("Id")
@@ -121,6 +215,22 @@ namespace HobomSpace.Infrastructure.Migrations
                     b.ToTable("spaces", "space");
                 });
 
+            modelBuilder.Entity("HobomSpace.Domain.Entities.Comment", b =>
+                {
+                    b.HasOne("HobomSpace.Domain.Entities.Page", null)
+                        .WithMany()
+                        .HasForeignKey("PageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_comments_pages_page_id");
+
+                    b.HasOne("HobomSpace.Domain.Entities.Comment", null)
+                        .WithMany()
+                        .HasForeignKey("ParentCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_comments_comments_parent_comment_id");
+                });
+
             modelBuilder.Entity("HobomSpace.Domain.Entities.Page", b =>
                 {
                     b.HasOne("HobomSpace.Domain.Entities.Page", null)
@@ -135,6 +245,16 @@ namespace HobomSpace.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_pages_spaces_space_id");
+                });
+
+            modelBuilder.Entity("HobomSpace.Domain.Entities.PageVersion", b =>
+                {
+                    b.HasOne("HobomSpace.Domain.Entities.Page", null)
+                        .WithMany()
+                        .HasForeignKey("PageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_page_versions_pages_page_id");
                 });
 #pragma warning restore 612, 618
         }

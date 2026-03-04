@@ -50,6 +50,21 @@ dotnet run --project src/HobomSpace.Api
 
 Server runs at `http://localhost:5254`.
 
+- API Docs (Scalar): `http://localhost:5254/scalar/v1`
+- OpenAPI Spec: `http://localhost:5254/openapi/v1.json`
+
+## Testing
+
+```bash
+# Unit tests only (no Docker required)
+dotnet test --filter "Category!=Integration"
+
+# All tests including integration (Docker required)
+dotnet test
+```
+
+Integration tests use Testcontainers to spin up a PostgreSQL container automatically. Docker Desktop must be running.
+
 ## Code Style
 
 This project uses `.editorconfig` for code style enforcement.
@@ -64,7 +79,10 @@ dotnet format
 
 ## CI
 
-GitHub Actions runs on every push and PR to `develop`:
+GitHub Actions runs on PR to `develop`:
 
 - Build
-- Format check (`dotnet format --verify-no-changes`)
+- Unit tests
+- Integration tests (Docker)
+- Migration pending check
+- Format check
