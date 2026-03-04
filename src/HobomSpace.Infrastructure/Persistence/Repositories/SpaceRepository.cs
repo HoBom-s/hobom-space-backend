@@ -15,6 +15,12 @@ public sealed class SpaceRepository(AppDbContext db) : ISpaceRepository
     public async Task<List<Space>> GetAllAsync(CancellationToken ct = default)
         => await db.Spaces.OrderBy(s => s.Name).ToListAsync(ct);
 
+    public async Task<List<Space>> GetAllAsync(int offset, int limit, CancellationToken ct = default)
+        => await db.Spaces.OrderBy(s => s.Name).Skip(offset).Take(limit).ToListAsync(ct);
+
+    public async Task<int> CountAsync(CancellationToken ct = default)
+        => await db.Spaces.CountAsync(ct);
+
     public async Task AddAsync(Space space, CancellationToken ct = default)
         => await db.Spaces.AddAsync(space, ct);
 

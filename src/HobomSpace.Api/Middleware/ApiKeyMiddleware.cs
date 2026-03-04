@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HobomSpace.Api.Middleware;
@@ -6,15 +8,12 @@ public sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration config
 {
     private const string ApiKeyHeader = "X-Api-Key";
 
-    private static readonly HashSet<string> BypassPaths =
-    [
-        "/health",
-        "/openapi/v1.json",
-    ];
-
     public async Task InvokeAsync(HttpContext context)
     {
-        if (BypassPaths.Contains(context.Request.Path.Value ?? string.Empty))
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/health/", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/openapi/", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/scalar/", StringComparison.OrdinalIgnoreCase))
         {
             await next(context);
             return;
@@ -34,7 +33,7 @@ public sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration config
         }
 
         var expectedKey = configuration["Security:ApiKey"];
-        if (string.IsNullOrEmpty(expectedKey) || !string.Equals(providedKey, expectedKey, StringComparison.Ordinal))
+        if (string.IsNullOrEmpty(expectedKey) || !IsKeyValid(providedKey!, expectedKey))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/problem+json";
@@ -48,5 +47,12 @@ public sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration config
         }
 
         await next(context);
+    }
+
+    private static bool IsKeyValid(string provided, string expected)
+    {
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+        var expectedBytes = Encoding.UTF8.GetBytes(expected);
+        return CryptographicOperations.FixedTimeEquals(providedBytes, expectedBytes);
     }
 }

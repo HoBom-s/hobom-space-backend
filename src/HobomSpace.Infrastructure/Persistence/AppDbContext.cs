@@ -8,6 +8,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<Space> Spaces => Set<Space>();
     public DbSet<Page> Pages => Set<Page>();
+    public DbSet<PageVersion> PageVersions => Set<PageVersion>();
+    public DbSet<Comment> Comments => Set<Comment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

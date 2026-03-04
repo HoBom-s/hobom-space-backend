@@ -22,5 +22,16 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      - name: Unit tests
+        run: dotnet test --no-build --configuration Release --verbosity normal --filter "Category!=Integration"
+
+      - name: Integration tests
+        run: dotnet test --no-build --configuration Release --verbosity normal --filter "Category=Integration"
+
+      - name: Check pending migrations
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef migrations has-pending-model-changes --project src/HobomSpace.Infrastructure --startup-project src/HobomSpace.Api --no-build --configuration Release
+
       - name: Check formatting
         run: dotnet format --verify-no-changes --no-restore

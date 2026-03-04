@@ -1,3 +1,4 @@
+using HobomSpace.Api.Contracts;
 using HobomSpace.Application.Services;
 using HobomSpace.Domain.Entities;
 
@@ -5,10 +6,6 @@ namespace HobomSpace.Api.Endpoints;
 
 public static class SpaceEndpoints
 {
-    public record CreateSpaceRequest(string Key, string Name, string? Description);
-    public record UpdateSpaceRequest(string Name, string? Description);
-    public record SpaceResponse(long Id, string Key, string Name, string? Description, DateTime CreatedAt, DateTime UpdatedAt);
-
     public static RouteGroupBuilder MapSpaceEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/v1/spaces").WithTags("Spaces");
@@ -17,22 +14,28 @@ public static class SpaceEndpoints
         {
             var space = await service.CreateAsync(request.Key, request.Name, request.Description, ct);
             return Results.Created($"/api/v1/spaces/{space.Key}", ToResponse(space));
-        });
+        }).Produces<SpaceResponse>(StatusCodes.Status201Created);
 
-        group.MapGet("/", async (ISpaceService service, CancellationToken ct) =>
-            Results.Ok((await service.GetAllAsync(ct)).Select(ToResponse)));
+        group.MapGet("/", async (ISpaceService service, CancellationToken ct, int offset = 0, int limit = 20) =>
+        {
+            var result = await service.GetAllAsync(offset, limit, ct);
+            return Results.Ok(new PaginatedResponse<SpaceResponse>(
+                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit));
+        }).Produces<PaginatedResponse<SpaceResponse>>();
 
         group.MapGet("/{key}", async (string key, ISpaceService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.GetByKeyAsync(key, ct))));
+            Results.Ok(ToResponse(await service.GetByKeyAsync(key, ct))))
+            .Produces<SpaceResponse>();
 
         group.MapPut("/{key}", async (string key, UpdateSpaceRequest request, ISpaceService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.UpdateAsync(key, request.Name, request.Description, ct))));
+            Results.Ok(ToResponse(await service.UpdateAsync(key, request.Name, request.Description, ct))))
+            .Produces<SpaceResponse>();
 
         group.MapDelete("/{key}", async (string key, ISpaceService service, CancellationToken ct) =>
         {
             await service.DeleteAsync(key, ct);
             return Results.NoContent();
-        });
+        }).Produces(StatusCodes.Status204NoContent);
 
         return group;
     }

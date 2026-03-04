@@ -1,0 +1,26 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /src
+
+COPY HobomSpace.slnx ./
+COPY src/HobomSpace.Domain/HobomSpace.Domain.csproj src/HobomSpace.Domain/
+COPY src/HobomSpace.Application/HobomSpace.Application.csproj src/HobomSpace.Application/
+COPY src/HobomSpace.Infrastructure/HobomSpace.Infrastructure.csproj src/HobomSpace.Infrastructure/
+COPY src/HobomSpace.Api/HobomSpace.Api.csproj src/HobomSpace.Api/
+RUN dotnet restore src/HobomSpace.Api/HobomSpace.Api.csproj
+
+COPY src/ src/
+RUN dotnet publish src/HobomSpace.Api/HobomSpace.Api.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser
+
+COPY --from=build /app .
+
+USER appuser
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+
+ENTRYPOINT ["dotnet", "HobomSpace.Api.dll"]

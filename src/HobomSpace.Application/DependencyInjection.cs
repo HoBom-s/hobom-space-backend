@@ -9,6 +9,9 @@ public static class DependencyInjection
     {
         services.AddScoped<ISpaceService, SpaceService>();
         services.AddScoped<IPageService, PageService>();
+        services.AddScoped<IPageVersionService, PageVersionService>();
+        services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<ISearchService, SearchService>();
 
         return services;
     }

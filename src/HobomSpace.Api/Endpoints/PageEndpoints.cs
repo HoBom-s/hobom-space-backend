@@ -1,3 +1,4 @@
+using HobomSpace.Api.Contracts;
 using HobomSpace.Application.Services;
 using HobomSpace.Domain.Entities;
 
@@ -5,11 +6,6 @@ namespace HobomSpace.Api.Endpoints;
 
 public static class PageEndpoints
 {
-    public record CreatePageRequest(string Title, string Content, long? ParentPageId, int Position = 0);
-    public record UpdatePageRequest(string Title, string Content, int? Position);
-    public record PageResponse(long Id, long SpaceId, long? ParentPageId, string Title, string Content, int Position, DateTime CreatedAt, DateTime UpdatedAt);
-    public record PageTreeNode(long Id, string Title, int Position, List<PageTreeNode> Children);
-
     public static RouteGroupBuilder MapPageEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/v1/spaces/{spaceKey}/pages").WithTags("Pages");
@@ -18,22 +14,25 @@ public static class PageEndpoints
         {
             var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, ct);
             return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ToResponse(page));
-        });
+        }).Produces<PageResponse>(StatusCodes.Status201Created);
 
         group.MapGet("/", async (string spaceKey, IPageService service, CancellationToken ct) =>
-            Results.Ok(BuildTree(await service.GetBySpaceKeyAsync(spaceKey, ct))));
+            Results.Ok(BuildTree(await service.GetBySpaceKeyAsync(spaceKey, ct))))
+            .Produces<List<PageTreeNode>>();
 
         group.MapGet("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.GetByIdAsync(pageId, ct))));
+            Results.Ok(ToResponse(await service.GetByIdAsync(spaceKey, pageId, ct))))
+            .Produces<PageResponse>();
 
         group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, CancellationToken ct) =>
-            Results.Ok(ToResponse(await service.UpdateAsync(pageId, request.Title, request.Content, request.Position, ct))));
+            Results.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, ct))))
+            .Produces<PageResponse>();
 
         group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
         {
-            await service.DeleteAsync(pageId, ct);
+            await service.DeleteAsync(spaceKey, pageId, ct);
             return Results.NoContent();
-        });
+        }).Produces(StatusCodes.Status204NoContent);
 
         return group;
     }
