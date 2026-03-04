@@ -8,5 +8,7 @@
   <Folder Name="/solution-items/">
     <File Path=".gitignore" />
     <File Path="README.md" />
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/ci.yml" />
   </Folder>
 </Solution>

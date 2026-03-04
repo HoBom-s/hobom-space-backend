@@ -15,12 +15,17 @@ public sealed class Page
 
     public static Page Create(long spaceId, long? parentPageId, string title, string content, int position = 0)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(spaceId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentOutOfRangeException.ThrowIfNegative(position);
+
         var now = DateTime.UtcNow;
         return new Page
         {
             SpaceId = spaceId,
             ParentPageId = parentPageId,
-            Title = title,
+            Title = title.Trim(),
             Content = content,
             Position = position,
             CreatedAt = now,
@@ -30,7 +35,13 @@ public sealed class Page
 
     public void Update(string title, string content, int? position)
     {
-        Title = title;
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentNullException.ThrowIfNull(content);
+
+        if (position.HasValue)
+            ArgumentOutOfRangeException.ThrowIfNegative(position.Value);
+
+        Title = title.Trim();
         Content = content;
         if (position.HasValue)
             Position = position.Value;

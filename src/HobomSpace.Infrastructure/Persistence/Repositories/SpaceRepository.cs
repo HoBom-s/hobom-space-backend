@@ -20,7 +20,4 @@ public sealed class SpaceRepository(AppDbContext db) : ISpaceRepository
 
     public void Remove(Space space)
         => db.Spaces.Remove(space);
-
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await db.SaveChangesAsync(ct);
 }

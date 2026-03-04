@@ -13,12 +13,18 @@ public sealed class Space
 
     public static Space Create(string key, string name, string? description)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        if (key.Length > 32)
+            throw new ArgumentException("Key must be 32 characters or less.", nameof(key));
+
         var now = DateTime.UtcNow;
         return new Space
         {
             Key = key.ToUpperInvariant(),
-            Name = name,
-            Description = description,
+            Name = name.Trim(),
+            Description = description?.Trim(),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -26,8 +32,10 @@ public sealed class Space
 
     public void Update(string name, string? description)
     {
-        Name = name;
-        Description = description;
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        Name = name.Trim();
+        Description = description?.Trim();
         UpdatedAt = DateTime.UtcNow;
     }
 }
