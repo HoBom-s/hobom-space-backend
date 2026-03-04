@@ -9,5 +9,4 @@ public interface ISpaceRepository
     Task<List<Space>> GetAllAsync(CancellationToken ct = default);
     Task AddAsync(Space space, CancellationToken ct = default);
     void Remove(Space space);
-    Task SaveChangesAsync(CancellationToken ct = default);
 }

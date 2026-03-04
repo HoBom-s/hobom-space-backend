@@ -1,4 +1,4 @@
-using HobomSpace.Application.Ports;
+using HobomSpace.Application.Services;
 using HobomSpace.Domain.Entities;
 
 namespace HobomSpace.Api.Endpoints;
@@ -13,62 +13,28 @@ public static class SpaceEndpoints
     {
         var group = app.MapGroup("/api/v1/spaces").WithTags("Spaces");
 
-        group.MapPost("/", Create);
-        group.MapGet("/", GetAll);
-        group.MapGet("/{key}", GetByKey);
-        group.MapPut("/{key}", Update);
-        group.MapDelete("/{key}", Delete);
+        group.MapPost("/", async (CreateSpaceRequest request, ISpaceService service, CancellationToken ct) =>
+        {
+            var space = await service.CreateAsync(request.Key, request.Name, request.Description, ct);
+            return Results.Created($"/api/v1/spaces/{space.Key}", ToResponse(space));
+        });
+
+        group.MapGet("/", async (ISpaceService service, CancellationToken ct) =>
+            Results.Ok((await service.GetAllAsync(ct)).Select(ToResponse)));
+
+        group.MapGet("/{key}", async (string key, ISpaceService service, CancellationToken ct) =>
+            Results.Ok(ToResponse(await service.GetByKeyAsync(key, ct))));
+
+        group.MapPut("/{key}", async (string key, UpdateSpaceRequest request, ISpaceService service, CancellationToken ct) =>
+            Results.Ok(ToResponse(await service.UpdateAsync(key, request.Name, request.Description, ct))));
+
+        group.MapDelete("/{key}", async (string key, ISpaceService service, CancellationToken ct) =>
+        {
+            await service.DeleteAsync(key, ct);
+            return Results.NoContent();
+        });
 
         return group;
-    }
-
-    private static async Task<IResult> Create(CreateSpaceRequest request, ISpaceRepository repo, CancellationToken ct)
-    {
-        var existing = await repo.GetByKeyAsync(request.Key, ct);
-        if (existing is not null)
-            return Results.Conflict($"Space with key '{request.Key.ToUpperInvariant()}' already exists.");
-
-        var space = Space.Create(request.Key, request.Name, request.Description);
-        await repo.AddAsync(space, ct);
-        await repo.SaveChangesAsync(ct);
-
-        return Results.Created($"/api/v1/spaces/{space.Key}", ToResponse(space));
-    }
-
-    private static async Task<IResult> GetAll(ISpaceRepository repo, CancellationToken ct)
-    {
-        var spaces = await repo.GetAllAsync(ct);
-        return Results.Ok(spaces.Select(ToResponse));
-    }
-
-    private static async Task<IResult> GetByKey(string key, ISpaceRepository repo, CancellationToken ct)
-    {
-        var space = await repo.GetByKeyAsync(key, ct);
-        return space is null ? Results.NotFound() : Results.Ok(ToResponse(space));
-    }
-
-    private static async Task<IResult> Update(string key, UpdateSpaceRequest request, ISpaceRepository repo, CancellationToken ct)
-    {
-        var space = await repo.GetByKeyAsync(key, ct);
-        if (space is null)
-            return Results.NotFound();
-
-        space.Update(request.Name, request.Description);
-        await repo.SaveChangesAsync(ct);
-
-        return Results.Ok(ToResponse(space));
-    }
-
-    private static async Task<IResult> Delete(string key, ISpaceRepository repo, CancellationToken ct)
-    {
-        var space = await repo.GetByKeyAsync(key, ct);
-        if (space is null)
-            return Results.NotFound();
-
-        repo.Remove(space);
-        await repo.SaveChangesAsync(ct);
-
-        return Results.NoContent();
     }
 
     private static SpaceResponse ToResponse(Space s) =>

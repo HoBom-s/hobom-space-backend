@@ -1,4 +1,4 @@
-using HobomSpace.Application.Ports;
+using HobomSpace.Application.Services;
 using HobomSpace.Domain.Entities;
 
 namespace HobomSpace.Api.Endpoints;
@@ -14,90 +14,28 @@ public static class PageEndpoints
     {
         var group = app.MapGroup("/api/v1/spaces/{spaceKey}/pages").WithTags("Pages");
 
-        group.MapPost("/", Create);
-        group.MapGet("/", GetTree);
-        group.MapGet("/{pageId:long}", GetById);
-        group.MapPut("/{pageId:long}", Update);
-        group.MapDelete("/{pageId:long}", Delete);
+        group.MapPost("/", async (string spaceKey, CreatePageRequest request, IPageService service, CancellationToken ct) =>
+        {
+            var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, ct);
+            return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ToResponse(page));
+        });
+
+        group.MapGet("/", async (string spaceKey, IPageService service, CancellationToken ct) =>
+            Results.Ok(BuildTree(await service.GetBySpaceKeyAsync(spaceKey, ct))));
+
+        group.MapGet("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
+            Results.Ok(ToResponse(await service.GetByIdAsync(pageId, ct))));
+
+        group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, CancellationToken ct) =>
+            Results.Ok(ToResponse(await service.UpdateAsync(pageId, request.Title, request.Content, request.Position, ct))));
+
+        group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
+        {
+            await service.DeleteAsync(pageId, ct);
+            return Results.NoContent();
+        });
 
         return group;
-    }
-
-    private static async Task<IResult> Create(
-        string spaceKey,
-        CreatePageRequest request,
-        ISpaceRepository spaceRepo,
-        IPageRepository pageRepo,
-        CancellationToken ct)
-    {
-        var space = await spaceRepo.GetByKeyAsync(spaceKey, ct);
-        if (space is null)
-            return Results.NotFound("Space not found.");
-
-        var page = Page.Create(space.Id, request.ParentPageId, request.Title, request.Content, request.Position);
-        await pageRepo.AddAsync(page, ct);
-        await pageRepo.SaveChangesAsync(ct);
-
-        return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ToResponse(page));
-    }
-
-    private static async Task<IResult> GetTree(
-        string spaceKey,
-        ISpaceRepository spaceRepo,
-        IPageRepository pageRepo,
-        CancellationToken ct)
-    {
-        var space = await spaceRepo.GetByKeyAsync(spaceKey, ct);
-        if (space is null)
-            return Results.NotFound("Space not found.");
-
-        var pages = await pageRepo.GetBySpaceIdAsync(space.Id, ct);
-        var tree = BuildTree(pages);
-
-        return Results.Ok(tree);
-    }
-
-    private static async Task<IResult> GetById(
-        string spaceKey,
-        long pageId,
-        IPageRepository pageRepo,
-        CancellationToken ct)
-    {
-        var page = await pageRepo.GetByIdAsync(pageId, ct);
-        return page is null ? Results.NotFound() : Results.Ok(ToResponse(page));
-    }
-
-    private static async Task<IResult> Update(
-        string spaceKey,
-        long pageId,
-        UpdatePageRequest request,
-        IPageRepository pageRepo,
-        CancellationToken ct)
-    {
-        var page = await pageRepo.GetByIdAsync(pageId, ct);
-        if (page is null)
-            return Results.NotFound();
-
-        page.Update(request.Title, request.Content, request.Position);
-        await pageRepo.SaveChangesAsync(ct);
-
-        return Results.Ok(ToResponse(page));
-    }
-
-    private static async Task<IResult> Delete(
-        string spaceKey,
-        long pageId,
-        IPageRepository pageRepo,
-        CancellationToken ct)
-    {
-        var page = await pageRepo.GetByIdAsync(pageId, ct);
-        if (page is null)
-            return Results.NotFound();
-
-        pageRepo.Remove(page);
-        await pageRepo.SaveChangesAsync(ct);
-
-        return Results.NoContent();
     }
 
     private static List<PageTreeNode> BuildTree(List<Page> pages)

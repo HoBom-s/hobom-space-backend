@@ -17,7 +17,4 @@ public sealed class PageRepository(AppDbContext db) : IPageRepository
 
     public void Remove(Page page)
         => db.Pages.Remove(page);
-
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await db.SaveChangesAsync(ct);
 }

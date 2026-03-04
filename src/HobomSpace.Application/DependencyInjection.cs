@@ -1,3 +1,4 @@
+using HobomSpace.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HobomSpace.Application;
@@ -6,6 +7,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<ISpaceService, SpaceService>();
+        services.AddScoped<IPageService, PageService>();
+
         return services;
     }
 }

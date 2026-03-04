@@ -7,14 +7,15 @@ Backend API server for HoBom Space — a Confluence-style document management se
 - .NET 10 / ASP.NET Core Minimal API
 - PostgreSQL (EF Core + Npgsql)
 - Clean Architecture (Domain → Application → Infrastructure → Api)
+- Serilog (structured logging)
 
 ## Project Structure
 
 ```
 src/
-├── HobomSpace.Api/              # HTTP endpoints, configuration
-├── HobomSpace.Application/      # Use cases, port interfaces
-├── HobomSpace.Domain/           # Domain entities
+├── HobomSpace.Api/              # HTTP endpoints, middleware, configuration
+├── HobomSpace.Application/      # Services, port interfaces
+├── HobomSpace.Domain/           # Domain entities, exceptions
 └── HobomSpace.Infrastructure/   # DbContext, repository implementations
 ```
 
@@ -27,11 +28,11 @@ src/
 
 ### Local Setup
 
-1. Configure DB connection:
+1. Configure local settings:
 
 ```bash
 cp src/HobomSpace.Api/appsettings.Local.example.json src/HobomSpace.Api/appsettings.Local.json
-# Edit ConnectionStrings in appsettings.Local.json
+# Edit ConnectionStrings and Security:ApiKey in appsettings.Local.json
 ```
 
 2. Run EF Core migrations:
@@ -48,3 +49,22 @@ dotnet run --project src/HobomSpace.Api
 ```
 
 Server runs at `http://localhost:5254`.
+
+## Code Style
+
+This project uses `.editorconfig` for code style enforcement.
+
+```bash
+# Check formatting
+dotnet format --verify-no-changes
+
+# Auto-fix formatting
+dotnet format
+```
+
+## CI
+
+GitHub Actions runs on every push and PR to `develop`:
+
+- Build
+- Format check (`dotnet format --verify-no-changes`)
