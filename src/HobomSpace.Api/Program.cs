@@ -4,7 +4,6 @@ using HobomSpace.Api.Middleware;
 using HobomSpace.Application;
 using HobomSpace.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
-using Scalar.AspNetCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -104,7 +103,16 @@ try
     app.UseRateLimiter();
 
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapGet("/scalar/v1", () => Results.Content("""
+        <!doctype html>
+        <html>
+        <head><title>HobomSpace API</title><meta charset="utf-8" /></head>
+        <body>
+            <script id="api-reference" data-url="/openapi/v1.json"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+        </body>
+        </html>
+        """, "text/html")).ExcludeFromDescription();
 
     app.MapHealthChecks("/health/ready");
     app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy" }));
