@@ -108,7 +108,7 @@ try
         <html>
         <head><title>HobomSpace API</title><meta charset="utf-8" /></head>
         <body>
-            <script id="api-reference" data-url="/openapi/v1.json"></script>
+            <script id="api-reference" data-url="../openapi/v1.json"></script>
             <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
         </body>
         </html>
