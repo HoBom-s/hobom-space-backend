@@ -43,12 +43,17 @@ public sealed class ApiLoggingMiddleware(RequestDelegate next)
         await uow.SaveChangesAsync();
     }
 
+    private static readonly HashSet<string> AllowedMethods = ["GET", "POST", "PUT", "DELETE"];
+
     private static bool ShouldLog(HttpContext context)
     {
-        var path = context.Request.Path.Value ?? string.Empty;
-
-        if (context.Request.Protocol == "HTTP/2" && string.IsNullOrEmpty(path))
+        if (context.Request.ContentType?.StartsWith("application/grpc", StringComparison.OrdinalIgnoreCase) == true)
             return false;
+
+        if (!AllowedMethods.Contains(context.Request.Method))
+            return false;
+
+        var path = context.Request.Path.Value ?? string.Empty;
 
         foreach (var prefix in ExcludedPrefixes)
         {
