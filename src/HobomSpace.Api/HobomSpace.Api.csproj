@@ -22,6 +22,9 @@
     <Protobuf Include="../../hobom-buf-proto/space/outbox/v1/*.proto"
               GrpcServices="Server"
               ProtoRoot="../../hobom-buf-proto" />
+    <Protobuf Include="../../hobom-buf-proto/log/outbox/v1/*.proto"
+              GrpcServices="Server"
+              ProtoRoot="../../hobom-buf-proto" />
   </ItemGroup>
 
   <ItemGroup>

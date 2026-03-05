@@ -27,7 +27,7 @@ public class CommentServiceTests
         var page = EntityTestHelper.CreatePageWithId(1);
         _pageRepo.GetByIdAsync(1).Returns(page);
 
-        var result = await _sut.CreateAsync(1, null, "Hello", "author");
+        var result = await _sut.CreateAsync("DEV", 1, null, "Hello", "author");
 
         result.PageId.Should().Be(1);
         result.Content.Should().Be("Hello");
@@ -40,7 +40,7 @@ public class CommentServiceTests
     {
         _pageRepo.GetByIdAsync(999).Returns((Page?)null);
 
-        var act = () => _sut.CreateAsync(999, null, "Hello", "author");
+        var act = () => _sut.CreateAsync("DEV", 999, null, "Hello", "author");
 
         await act.Should().ThrowAsync<NotFoundException>();
     }
@@ -53,7 +53,7 @@ public class CommentServiceTests
         var parentComment = EntityTestHelper.CreateCommentWithId(99, pageId: 1);
         _repo.GetByIdAsync(99).Returns(parentComment);
 
-        var result = await _sut.CreateAsync(1, 99, "Reply", null);
+        var result = await _sut.CreateAsync("DEV", 1, 99, "Reply", null);
 
         result.ParentCommentId.Should().Be(99);
     }
@@ -65,7 +65,7 @@ public class CommentServiceTests
         _pageRepo.GetByIdAsync(1).Returns(page);
         _repo.GetByIdAsync(999).Returns((Comment?)null);
 
-        var act = () => _sut.CreateAsync(1, 999, "Reply", null);
+        var act = () => _sut.CreateAsync("DEV", 1, 999, "Reply", null);
 
         await act.Should().ThrowAsync<NotFoundException>();
     }
@@ -78,7 +78,7 @@ public class CommentServiceTests
         var parentComment = EntityTestHelper.CreateCommentWithId(99, pageId: 2);
         _repo.GetByIdAsync(99).Returns(parentComment);
 
-        var act = () => _sut.CreateAsync(1, 99, "Reply", null);
+        var act = () => _sut.CreateAsync("DEV", 1, 99, "Reply", null);
 
         await act.Should().ThrowAsync<ArgumentException>();
     }

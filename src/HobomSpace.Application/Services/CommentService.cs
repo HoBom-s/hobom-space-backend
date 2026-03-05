@@ -8,7 +8,7 @@ namespace HobomSpace.Application.Services;
 
 public interface ICommentService
 {
-    Task<Comment> CreateAsync(long pageId, long? parentCommentId, string content, string? author, CancellationToken ct = default);
+    Task<Comment> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId = null, CancellationToken ct = default);
     Task<PaginatedResult<Comment>> GetByPageIdAsync(long pageId, int offset, int limit, CancellationToken ct = default);
     Task<Comment> UpdateAsync(long commentId, string content, CancellationToken ct = default);
     Task DeleteAsync(long commentId, CancellationToken ct = default);
@@ -20,7 +20,7 @@ public sealed class CommentService(
     IOutboxRepository outboxRepo,
     IUnitOfWork unitOfWork) : ICommentService
 {
-    public async Task<Comment> CreateAsync(long pageId, long? parentCommentId, string content, string? author, CancellationToken ct = default)
+    public async Task<Comment> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId = null, CancellationToken ct = default)
     {
         _ = await pageRepo.GetByIdAsync(pageId, ct)
             ?? throw new NotFoundException($"Page {pageId} not found.");
@@ -36,7 +36,7 @@ public sealed class CommentService(
         var comment = Comment.Create(pageId, parentCommentId, content, author);
         await commentRepo.AddAsync(comment, ct);
         await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
-            JsonSerializer.Serialize(new { entityType = "COMMENT", action = "CREATED", pageId, title = content.Length > 100 ? content[..100] : content })), ct);
+            JsonSerializer.Serialize(new { entityType = "COMMENT", action = "CREATED", spaceKey, pageId, title = content.Length > 100 ? content[..100] : content, actorId = actorId ?? "" })), ct);
         await unitOfWork.SaveChangesAsync(ct);
         return comment;
     }

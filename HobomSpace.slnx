@@ -21,5 +21,6 @@
   <Folder Name="/proto/">
     <File Path="hobom-buf-proto/space/outbox/v1/find-hobom-space-outbox.proto" />
     <File Path="hobom-buf-proto/space/outbox/v1/patch-hobom-space-outbox.proto" />
+    <File Path="hobom-buf-proto/log/outbox/v1/hobom-log-outbox.proto" />
   </Folder>
 </Solution>

@@ -99,6 +99,7 @@ try
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseMiddleware<ApiKeyMiddleware>();
 
+    app.UseMiddleware<ApiLoggingMiddleware>();
     app.UseSerilogRequestLogging();
 
     if (!app.Environment.IsDevelopment())
@@ -131,6 +132,7 @@ try
     app.MapSearchEndpoints().RequireRateLimiting("fixed");
     app.MapGrpcService<SpaceOutboxFindService>();
     app.MapGrpcService<SpaceOutboxPatchService>();
+    app.MapGrpcService<SpaceLogFindService>();
 
     Log.Information("Starting HobomSpace API");
     app.Run();

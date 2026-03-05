@@ -10,9 +10,10 @@ public static class PageEndpoints
     {
         var group = app.MapGroup("/api/v1/spaces/{spaceKey}/pages").WithTags("Pages");
 
-        group.MapPost("/", async (string spaceKey, CreatePageRequest request, IPageService service, CancellationToken ct) =>
+        group.MapPost("/", async (string spaceKey, CreatePageRequest request, IPageService service, HttpContext context, CancellationToken ct) =>
         {
-            var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, ct);
+            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, actorId, ct);
             return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ApiResponse.Created(ToResponse(page)));
         }).Produces<ApiResponse<PageResponse>>(StatusCodes.Status201Created);
 
@@ -24,13 +25,16 @@ public static class PageEndpoints
             Results.Ok(ApiResponse.Ok(ToResponse(await service.GetByIdAsync(spaceKey, pageId, ct)))))
             .Produces<ApiResponse<PageResponse>>();
 
-        group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, CancellationToken ct) =>
-            Results.Ok(ApiResponse.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, ct)))))
-            .Produces<ApiResponse<PageResponse>>();
-
-        group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, CancellationToken ct) =>
+        group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, HttpContext context, CancellationToken ct) =>
         {
-            await service.DeleteAsync(spaceKey, pageId, ct);
+            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            return Results.Ok(ApiResponse.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, actorId, ct))));
+        }).Produces<ApiResponse<PageResponse>>();
+
+        group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, HttpContext context, CancellationToken ct) =>
+        {
+            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            await service.DeleteAsync(spaceKey, pageId, actorId, ct);
             return Results.Ok(ApiResponse.Ok<object?>(null, "Deleted"));
         }).Produces<ApiResponse<object>>();
 

@@ -11,10 +11,11 @@ public static class CommentEndpoints
         var group = app.MapGroup("/api/v1/spaces/{spaceKey}/pages/{pageId:long}/comments").WithTags("Comments");
 
         group.MapPost("/", async (string spaceKey, long pageId, CreateCommentRequest request,
-            IPageService pageService, ICommentService service, CancellationToken ct) =>
+            IPageService pageService, ICommentService service, HttpContext context, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
-            var comment = await service.CreateAsync(pageId, request.ParentCommentId, request.Content, request.Author, ct);
+            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var comment = await service.CreateAsync(spaceKey, pageId, request.ParentCommentId, request.Content, request.Author, actorId, ct);
             return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{pageId}/comments/{comment.Id}", ApiResponse.Created(ToResponse(comment)));
         }).Produces<ApiResponse<CommentResponse>>(StatusCodes.Status201Created);
 
