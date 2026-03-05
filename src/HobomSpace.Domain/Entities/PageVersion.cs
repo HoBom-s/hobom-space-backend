@@ -15,7 +15,6 @@ public sealed class PageVersion
     public static PageVersion Create(long pageId, int version, string title, string content, string? editedBy)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
-        ArgumentException.ThrowIfNullOrWhiteSpace(content);
 
         return new PageVersion
         {

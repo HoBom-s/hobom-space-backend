@@ -44,14 +44,11 @@ public class PageVersionTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Create_WithInvalidContent_ThrowsArgumentException(string? content)
+    [Fact]
+    public void Create_WithEmptyContent_Succeeds()
     {
-        var act = () => PageVersion.Create(1, 0, "Title", content!, null);
+        var pv = PageVersion.Create(1, 0, "Title", "", null);
 
-        act.Should().Throw<ArgumentException>();
+        pv.Content.Should().BeEmpty();
     }
 }
