@@ -10,11 +10,16 @@
   </Folder>
   <Folder Name="/solution-items/">
     <File Path=".gitignore" />
+    <File Path=".gitmodules" />
     <File Path="README.md" />
     <File Path=".editorconfig" />
     <File Path=".github/workflows/ci.yml" />
     <File Path="Dockerfile" />
     <File Path=".dockerignore" />
     <File Path="Jenkinsfile" />
+  </Folder>
+  <Folder Name="/proto/">
+    <File Path="hobom-buf-proto/space/outbox/v1/find-hobom-space-outbox.proto" />
+    <File Path="hobom-buf-proto/space/outbox/v1/patch-hobom-space-outbox.proto" />
   </Folder>
 </Solution>

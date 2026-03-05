@@ -1,9 +1,11 @@
 using System.Threading.RateLimiting;
 using HobomSpace.Api.Endpoints;
+using HobomSpace.Api.Grpc;
 using HobomSpace.Api.Middleware;
 using HobomSpace.Application;
 using HobomSpace.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -44,6 +46,10 @@ try
             return Task.CompletedTask;
         });
     });
+    builder.Services.AddGrpc(options =>
+    {
+        options.Interceptors.Add<ApiKeyInterceptor>();
+    });
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -80,6 +86,8 @@ try
     builder.WebHost.ConfigureKestrel(options =>
     {
         options.Limits.MaxRequestBodySize = 10 * 1024 * 1024;
+        options.ListenAnyIP(8080);
+        options.ListenAnyIP(50052, o => o.Protocols = HttpProtocols.Http2);
     });
 
     builder.WebHost.UseShutdownTimeout(TimeSpan.FromSeconds(30));
@@ -121,6 +129,8 @@ try
     app.MapPageVersionEndpoints().RequireRateLimiting("fixed");
     app.MapCommentEndpoints().RequireRateLimiting("fixed");
     app.MapSearchEndpoints().RequireRateLimiting("fixed");
+    app.MapGrpcService<SpaceOutboxFindService>();
+    app.MapGrpcService<SpaceOutboxPatchService>();
 
     Log.Information("Starting HobomSpace API");
     app.Run();

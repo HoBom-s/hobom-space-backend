@@ -12,12 +12,13 @@ public class CommentServiceTests
 {
     private readonly ICommentRepository _repo = Substitute.For<ICommentRepository>();
     private readonly IPageRepository _pageRepo = Substitute.For<IPageRepository>();
+    private readonly IOutboxRepository _outboxRepo = Substitute.For<IOutboxRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly CommentService _sut;
 
     public CommentServiceTests()
     {
-        _sut = new CommentService(_repo, _pageRepo, _uow);
+        _sut = new CommentService(_repo, _pageRepo, _outboxRepo, _uow);
     }
 
     [Fact]

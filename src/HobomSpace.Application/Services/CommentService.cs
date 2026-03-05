@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HobomSpace.Application.Models;
 using HobomSpace.Application.Ports;
 using HobomSpace.Domain.Entities;
@@ -16,6 +17,7 @@ public interface ICommentService
 public sealed class CommentService(
     ICommentRepository commentRepo,
     IPageRepository pageRepo,
+    IOutboxRepository outboxRepo,
     IUnitOfWork unitOfWork) : ICommentService
 {
     public async Task<Comment> CreateAsync(long pageId, long? parentCommentId, string content, string? author, CancellationToken ct = default)
@@ -33,6 +35,8 @@ public sealed class CommentService(
 
         var comment = Comment.Create(pageId, parentCommentId, content, author);
         await commentRepo.AddAsync(comment, ct);
+        await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
+            JsonSerializer.Serialize(new { entityType = "COMMENT", action = "CREATED", pageId, title = content.Length > 100 ? content[..100] : content })), ct);
         await unitOfWork.SaveChangesAsync(ct);
         return comment;
     }

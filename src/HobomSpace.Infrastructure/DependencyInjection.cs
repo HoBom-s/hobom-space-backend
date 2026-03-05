@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IPageRepository, PageRepository>();
         services.AddScoped<IPageVersionRepository, PageVersionRepository>();
         services.AddScoped<ICommentRepository, CommentRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         return services;
     }

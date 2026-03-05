@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HobomSpace.Application.Ports;
 using HobomSpace.Domain.Entities;
 using HobomSpace.Domain.Exceptions;
@@ -13,7 +14,7 @@ public interface IPageService
     Task DeleteAsync(string spaceKey, long pageId, CancellationToken ct = default);
 }
 
-public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository pageRepo, IPageVersionService versionService, IUnitOfWork uow) : IPageService
+public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository pageRepo, IPageVersionService versionService, IOutboxRepository outboxRepo, IUnitOfWork uow) : IPageService
 {
     public async Task<Page> CreateAsync(string spaceKey, string title, string content, long? parentPageId, int position, CancellationToken ct = default)
     {
@@ -22,6 +23,8 @@ public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository page
 
         var page = Page.Create(space.Id, parentPageId, title, content, position);
         await pageRepo.AddAsync(page, ct);
+        await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
+            JsonSerializer.Serialize(new { entityType = "PAGE", action = "CREATED", spaceKey, pageId = page.Id, title })), ct);
         await uow.SaveChangesAsync(ct);
         return page;
     }
@@ -50,6 +53,8 @@ public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository page
         var page = await GetByIdAsync(spaceKey, pageId, ct);
         await versionService.SaveVersionAsync(pageId, ct);
         page.Update(title, content, position);
+        await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
+            JsonSerializer.Serialize(new { entityType = "PAGE", action = "UPDATED", spaceKey, pageId, title })), ct);
         await uow.SaveChangesAsync(ct);
         return page;
     }
@@ -57,6 +62,8 @@ public sealed class PageService(ISpaceRepository spaceRepo, IPageRepository page
     public async Task DeleteAsync(string spaceKey, long pageId, CancellationToken ct = default)
     {
         var page = await GetByIdAsync(spaceKey, pageId, ct);
+        await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
+            JsonSerializer.Serialize(new { entityType = "PAGE", action = "DELETED", spaceKey, pageId, title = page.Title })), ct);
         pageRepo.Remove(page);
         await uow.SaveChangesAsync(ct);
     }

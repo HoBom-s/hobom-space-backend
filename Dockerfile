@@ -9,6 +9,7 @@ COPY src/HobomSpace.Api/HobomSpace.Api.csproj src/HobomSpace.Api/
 RUN dotnet restore src/HobomSpace.Api/HobomSpace.Api.csproj
 
 COPY src/ src/
+COPY hobom-buf-proto/ hobom-buf-proto/
 RUN dotnet publish src/HobomSpace.Api/HobomSpace.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
@@ -20,7 +21,7 @@ RUN groupadd --system --gid 1001 appgroup && \
 COPY --from=build /app .
 
 USER appuser
-EXPOSE 8080
+EXPOSE 8080 50052
 ENV ASPNETCORE_URLS=http://+:8080
 
 ENTRYPOINT ["dotnet", "HobomSpace.Api.dll"]

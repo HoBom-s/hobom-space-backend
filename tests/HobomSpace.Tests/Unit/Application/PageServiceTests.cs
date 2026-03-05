@@ -13,12 +13,13 @@ public class PageServiceTests
     private readonly ISpaceRepository _spaceRepo = Substitute.For<ISpaceRepository>();
     private readonly IPageRepository _pageRepo = Substitute.For<IPageRepository>();
     private readonly IPageVersionService _versionService = Substitute.For<IPageVersionService>();
+    private readonly IOutboxRepository _outboxRepo = Substitute.For<IOutboxRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly PageService _sut;
 
     public PageServiceTests()
     {
-        _sut = new PageService(_spaceRepo, _pageRepo, _versionService, _uow);
+        _sut = new PageService(_spaceRepo, _pageRepo, _versionService, _outboxRepo, _uow);
     }
 
     [Fact]

@@ -10,6 +10,13 @@ public sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration config
 
     public async Task InvokeAsync(HttpContext context)
     {
+        var contentType = context.Request.ContentType ?? string.Empty;
+        if (contentType.StartsWith("application/grpc", StringComparison.OrdinalIgnoreCase))
+        {
+            await next(context);
+            return;
+        }
+
         var path = context.Request.Path.Value ?? string.Empty;
         if (path.StartsWith("/health/", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/openapi/", StringComparison.OrdinalIgnoreCase)
