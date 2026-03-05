@@ -12,7 +12,7 @@ public static class PageEndpoints
 
         group.MapPost("/", async (string spaceKey, CreatePageRequest request, IPageService service, HttpContext context, CancellationToken ct) =>
         {
-            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var actorId = context.Request.Headers["X-User-Nickname"].FirstOrDefault();
             var page = await service.CreateAsync(spaceKey, request.Title, request.Content, request.ParentPageId, request.Position, actorId, ct);
             return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{page.Id}", ApiResponse.Created(ToResponse(page)));
         }).Produces<ApiResponse<PageResponse>>(StatusCodes.Status201Created);
@@ -27,13 +27,13 @@ public static class PageEndpoints
 
         group.MapPut("/{pageId:long}", async (string spaceKey, long pageId, UpdatePageRequest request, IPageService service, HttpContext context, CancellationToken ct) =>
         {
-            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var actorId = context.Request.Headers["X-User-Nickname"].FirstOrDefault();
             return Results.Ok(ApiResponse.Ok(ToResponse(await service.UpdateAsync(spaceKey, pageId, request.Title, request.Content, request.Position, actorId, ct))));
         }).Produces<ApiResponse<PageResponse>>();
 
         group.MapDelete("/{pageId:long}", async (string spaceKey, long pageId, IPageService service, HttpContext context, CancellationToken ct) =>
         {
-            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var actorId = context.Request.Headers["X-User-Nickname"].FirstOrDefault();
             await service.DeleteAsync(spaceKey, pageId, actorId, ct);
             return Results.Ok(ApiResponse.Ok<object?>(null, "Deleted"));
         }).Produces<ApiResponse<object>>();

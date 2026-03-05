@@ -14,7 +14,7 @@ public static class CommentEndpoints
             IPageService pageService, ICommentService service, HttpContext context, CancellationToken ct) =>
         {
             await pageService.GetByIdAsync(spaceKey, pageId, ct);
-            var actorId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+            var actorId = context.Request.Headers["X-User-Nickname"].FirstOrDefault();
             var comment = await service.CreateAsync(spaceKey, pageId, request.ParentCommentId, request.Content, request.Author, actorId, ct);
             return Results.Created($"/api/v1/spaces/{spaceKey}/pages/{pageId}/comments/{comment.Id}", ApiResponse.Created(ToResponse(comment)));
         }).Produces<ApiResponse<CommentResponse>>(StatusCodes.Status201Created);
