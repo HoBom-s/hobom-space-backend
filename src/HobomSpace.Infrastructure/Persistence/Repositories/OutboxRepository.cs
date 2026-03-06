@@ -17,4 +17,11 @@ public sealed class OutboxRepository(AppDbContext db) : IOutboxRepository
 
     public async Task AddAsync(OutboxMessage message, CancellationToken ct = default)
         => await db.OutboxMessages.AddAsync(message, ct);
+
+    public async Task<int> DeleteOlderThanAsync(DateTime cutoff, int batchSize, CancellationToken ct = default)
+        => await db.OutboxMessages
+            .Where(o => o.CreatedAt < cutoff)
+            .OrderBy(o => o.CreatedAt)
+            .Take(batchSize)
+            .ExecuteDeleteAsync(ct);
 }

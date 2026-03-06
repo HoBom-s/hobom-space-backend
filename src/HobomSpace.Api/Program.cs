@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using HobomSpace.Api.BackgroundServices;
 using HobomSpace.Api.Endpoints;
 using HobomSpace.Api.Grpc;
 using HobomSpace.Api.Middleware;
@@ -52,6 +53,7 @@ try
     });
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddHostedService<OutboxCleanupService>();
 
     var healthChecks = builder.Services.AddHealthChecks();
     var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");

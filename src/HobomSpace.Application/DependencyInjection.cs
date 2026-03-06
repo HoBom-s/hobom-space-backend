@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<IPageVersionService, PageVersionService>();
         services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<IOutboxCleaner, OutboxCleaner>();
 
         return services;
     }

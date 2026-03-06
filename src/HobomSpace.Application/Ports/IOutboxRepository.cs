@@ -7,4 +7,5 @@ public interface IOutboxRepository
     Task<List<OutboxMessage>> FindByEventTypeAndStatusAsync(string eventType, string status, CancellationToken ct = default);
     Task<OutboxMessage?> FindByEventIdAsync(string eventId, CancellationToken ct = default);
     Task AddAsync(OutboxMessage message, CancellationToken ct = default);
+    Task<int> DeleteOlderThanAsync(DateTime cutoff, int batchSize, CancellationToken ct = default);
 }
