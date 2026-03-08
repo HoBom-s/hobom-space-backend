@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IPageVersionRepository, PageVersionRepository>();
         services.AddScoped<ICommentRepository, CommentRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IErrorEventRepository, ErrorEventRepository>();
 
         return services;
     }

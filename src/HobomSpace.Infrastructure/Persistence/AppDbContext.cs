@@ -11,6 +11,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<PageVersion> PageVersions => Set<PageVersion>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<ErrorEvent> ErrorEvents => Set<ErrorEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

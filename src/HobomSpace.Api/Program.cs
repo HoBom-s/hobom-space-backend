@@ -132,6 +132,7 @@ try
     app.MapPageVersionEndpoints().RequireRateLimiting("fixed");
     app.MapCommentEndpoints().RequireRateLimiting("fixed");
     app.MapSearchEndpoints().RequireRateLimiting("fixed");
+    app.MapErrorEndpoints().RequireRateLimiting("fixed");
     app.MapGrpcService<SpaceOutboxFindService>();
     app.MapGrpcService<SpaceOutboxPatchService>();
     app.MapGrpcService<SpaceLogFindService>();

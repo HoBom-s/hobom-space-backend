@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IOutboxCleaner, OutboxCleaner>();
+        services.AddScoped<IErrorEventService, ErrorEventService>();
 
         return services;
     }
