@@ -26,8 +26,13 @@ public sealed class ErrorEventService(
 
     public async Task<PagedResult<ErrorEvent>> GetAllAsync(int page, int size, string? errorType = null, string? screen = null, CancellationToken ct = default)
     {
-        (page, size) = PagedResult<ErrorEvent>.Clamp(page, size);
-        var offset = (page - 1) * size;
+        if (page < 0)
+            throw new ArgumentException("Page must be greater than or equal to 0.", nameof(page));
+        if (size < 1)
+            throw new ArgumentException("Size must be greater than or equal to 1.", nameof(size));
+
+        size = Math.Min(size, 100);
+        var offset = page * size;
         var items = await errorEventRepo.GetAllAsync(offset, size, errorType, screen, ct);
         var total = await errorEventRepo.CountAsync(errorType, screen, ct);
         return new PagedResult<ErrorEvent>(items, total, page, size);

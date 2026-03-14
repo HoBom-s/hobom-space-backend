@@ -24,4 +24,11 @@ internal static class EntityTestHelper
         typeof(Comment).GetProperty(nameof(Comment.Id))!.SetValue(comment, id);
         return comment;
     }
+
+    public static ErrorEvent CreateErrorEventWithId(long id, string message = "Test error", string screen = "/test", string errorType = "CLIENT_LOGIC")
+    {
+        var errorEvent = ErrorEvent.Create(message, null, screen, errorType, null, null);
+        typeof(ErrorEvent).GetProperty(nameof(ErrorEvent.Id))!.SetValue(errorEvent, id);
+        return errorEvent;
+    }
 }
