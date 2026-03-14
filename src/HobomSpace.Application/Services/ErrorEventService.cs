@@ -8,7 +8,7 @@ namespace HobomSpace.Application.Services;
 public interface IErrorEventService
 {
     Task<ErrorEvent> CaptureAsync(string message, string? stackTrace, string screen, string errorType, string? userAgent, string? nickname, CancellationToken ct = default);
-    Task<PaginatedResult<ErrorEvent>> GetAllAsync(int offset, int limit, string? errorType = null, string? screen = null, CancellationToken ct = default);
+    Task<PagedResult<ErrorEvent>> GetAllAsync(int page, int size, string? errorType = null, string? screen = null, CancellationToken ct = default);
     Task<ErrorEvent> GetByIdAsync(long id, CancellationToken ct = default);
 }
 
@@ -24,12 +24,13 @@ public sealed class ErrorEventService(
         return errorEvent;
     }
 
-    public async Task<PaginatedResult<ErrorEvent>> GetAllAsync(int offset, int limit, string? errorType = null, string? screen = null, CancellationToken ct = default)
+    public async Task<PagedResult<ErrorEvent>> GetAllAsync(int page, int size, string? errorType = null, string? screen = null, CancellationToken ct = default)
     {
-        (offset, limit) = PaginatedResult<ErrorEvent>.Clamp(offset, limit);
-        var items = await errorEventRepo.GetAllAsync(offset, limit, errorType, screen, ct);
+        (page, size) = PagedResult<ErrorEvent>.Clamp(page, size);
+        var offset = (page - 1) * size;
+        var items = await errorEventRepo.GetAllAsync(offset, size, errorType, screen, ct);
         var total = await errorEventRepo.CountAsync(errorType, screen, ct);
-        return new PaginatedResult<ErrorEvent>(items, total, offset, limit);
+        return new PagedResult<ErrorEvent>(items, total, page, size);
     }
 
     public async Task<ErrorEvent> GetByIdAsync(long id, CancellationToken ct = default)

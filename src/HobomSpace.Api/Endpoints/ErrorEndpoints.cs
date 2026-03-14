@@ -21,11 +21,12 @@ public static class ErrorEndpoints
         }).Produces<ApiResponse<ErrorEventResponse>>(StatusCodes.Status201Created);
 
         group.MapGet("/", async (IErrorEventService service, CancellationToken ct,
-            string? errorType = null, string? screen = null, int offset = 0, int limit = 20) =>
+            string? errorType = null, string? screen = null, int page = 1, int size = 20) =>
         {
-            var result = await service.GetAllAsync(offset, limit, errorType, screen, ct);
+            var result = await service.GetAllAsync(page, size, errorType, screen, ct);
+            var offset = (result.Page - 1) * result.Size;
             return Results.Ok(ApiResponse.Ok(new PaginatedResponse<ErrorEventResponse>(
-                result.Items.Select(ToResponse).ToList(), result.TotalCount, result.Offset, result.Limit)));
+                result.Items.Select(ToResponse).ToList(), result.TotalCount, offset, result.Size)));
         }).Produces<ApiResponse<PaginatedResponse<ErrorEventResponse>>>();
 
         group.MapGet("/{id:long}", async (long id, IErrorEventService service, CancellationToken ct) =>
