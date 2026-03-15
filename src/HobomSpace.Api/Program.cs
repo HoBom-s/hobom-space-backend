@@ -89,7 +89,24 @@ try
     {
         options.Limits.MaxRequestBodySize = 10 * 1024 * 1024;
         options.ListenAnyIP(8080);
-        options.ListenAnyIP(50052, o => o.Protocols = HttpProtocols.Http2);
+
+        var tlsCert = builder.Configuration["GrpcTls:CertPath"];
+        var tlsKey = builder.Configuration["GrpcTls:KeyPath"];
+
+        if (!string.IsNullOrEmpty(tlsCert) && !string.IsNullOrEmpty(tlsKey)
+            && System.IO.File.Exists(tlsCert) && System.IO.File.Exists(tlsKey))
+        {
+            options.ListenAnyIP(50052, o =>
+            {
+                o.Protocols = HttpProtocols.Http2;
+                o.UseHttps(System.Security.Cryptography.X509Certificates.X509Certificate2
+                    .CreateFromPemFile(tlsCert, tlsKey));
+            });
+        }
+        else
+        {
+            options.ListenAnyIP(50052, o => o.Protocols = HttpProtocols.Http2);
+        }
     });
 
     builder.WebHost.UseShutdownTimeout(TimeSpan.FromSeconds(30));
