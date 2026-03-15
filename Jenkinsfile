@@ -9,5 +9,6 @@ hobomPipeline(
   addHost:        true,
   submodules:     false,
   extraPorts:     ['50052:50052'],
+  extraVolumes:   ['/home/infra-admin/certs:/etc/grpc-tls:ro'],
   smokeCheckPath: '/health/live'
 )
