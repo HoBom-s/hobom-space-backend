@@ -7,7 +7,7 @@ hobomPipeline(
   cpus:           '0.5',
   envPath:        '/etc/hobom-dev/dev-hobom-space-backend/.env',
   addHost:        true,
-  submodules:     true,
+  submodules:     false,
   extraPorts:     ['50052:50052'],
   smokeCheckPath: '/health/live'
 )

@@ -19,12 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../../hobom-buf-proto/space/outbox/v1/*.proto"
+    <Protobuf Include="../../proto/space/outbox/v1/*.proto"
               GrpcServices="Server"
-              ProtoRoot="../../hobom-buf-proto" />
-    <Protobuf Include="../../hobom-buf-proto/log/outbox/v1/*.proto"
+              ProtoRoot="../../proto" />
+    <Protobuf Include="../../proto/log/outbox/v1/*.proto"
               GrpcServices="Server"
-              ProtoRoot="../../hobom-buf-proto" />
+              ProtoRoot="../../proto" />
   </ItemGroup>
 
   <ItemGroup>

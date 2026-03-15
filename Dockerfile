@@ -9,7 +9,7 @@ COPY src/HobomSpace.Api/HobomSpace.Api.csproj src/HobomSpace.Api/
 RUN dotnet restore src/HobomSpace.Api/HobomSpace.Api.csproj
 
 COPY src/ src/
-COPY hobom-buf-proto/ hobom-buf-proto/
+COPY proto/ proto/
 RUN dotnet publish src/HobomSpace.Api/HobomSpace.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
