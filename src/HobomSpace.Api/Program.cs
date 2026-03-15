@@ -5,7 +5,6 @@ using HobomSpace.Api.Grpc;
 using HobomSpace.Api.Middleware;
 using HobomSpace.Application;
 using HobomSpace.Infrastructure;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 
@@ -125,7 +124,6 @@ try
     {
         app.UseHsts();
     }
-    app.UseHttpsRedirection();
 
     app.UseCors();
     app.UseRateLimiter();
