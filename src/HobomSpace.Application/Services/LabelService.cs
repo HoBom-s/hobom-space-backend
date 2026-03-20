@@ -29,6 +29,9 @@ public interface ILabelService
 
     /// <summary>특정 라벨이 부착된 페이지 목록을 조회한다.</summary>
     Task<Result<List<Page>>> GetPagesByLabelAsync(string spaceKey, long labelId, CancellationToken ct = default);
+
+    /// <summary>여러 페이지에 부착된 라벨을 배치 조회한다.</summary>
+    Task<Dictionary<long, List<Label>>> GetLabelsForPagesAsync(IEnumerable<long> pageIds, CancellationToken ct = default);
 }
 
 /// <summary>라벨 CRUD 및 페이지-라벨 연결 서비스 구현체.</summary>
@@ -154,5 +157,23 @@ public sealed class LabelService(
                 pages.Add(page);
         }
         return pages;
+    }
+
+    public async Task<Dictionary<long, List<Label>>> GetLabelsForPagesAsync(IEnumerable<long> pageIds, CancellationToken ct)
+    {
+        var idList = pageIds.ToList();
+        if (idList.Count == 0) return new Dictionary<long, List<Label>>();
+
+        var pageLabels = await pageLabelRepo.ListAsync(new PageLabelsByPageIdsSpec(idList), ct);
+        if (pageLabels.Count == 0) return new Dictionary<long, List<Label>>();
+
+        var labelIds = pageLabels.Select(pl => pl.LabelId).Distinct().ToList();
+        var labels = await labelRepo.ListAsync(new LabelsByIdsSpec(labelIds), ct);
+        var labelMap = labels.ToDictionary(l => l.Id);
+
+        return pageLabels
+            .Where(pl => labelMap.ContainsKey(pl.LabelId))
+            .GroupBy(pl => pl.PageId)
+            .ToDictionary(g => g.Key, g => g.Select(pl => labelMap[pl.LabelId]).ToList());
     }
 }

@@ -11,3 +11,6 @@ public record LabelResponse(long Id, long SpaceId, string Name, string Color, Da
 
 /// <summary>페이지에 라벨 부착 요청 DTO.</summary>
 public record AddPageLabelRequest(long LabelId);
+
+/// <summary>페이지 컨텍스트에서 사용하는 라벨 요약 DTO.</summary>
+public record LabelSummary(long Id, string Name, string Color);

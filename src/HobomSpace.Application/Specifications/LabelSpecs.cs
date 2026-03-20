@@ -23,3 +23,15 @@ public sealed class PageIdsByLabelIdSpec : Specification<PageLabel>
 {
     public PageIdsByLabelIdSpec(long labelId) => Query.Where(pl => pl.LabelId == labelId);
 }
+
+public sealed class PageLabelsByPageIdsSpec : Specification<PageLabel>
+{
+    public PageLabelsByPageIdsSpec(IEnumerable<long> pageIds)
+        => Query.Where(pl => pageIds.Contains(pl.PageId));
+}
+
+public sealed class LabelsByIdsSpec : Specification<Label>
+{
+    public LabelsByIdsSpec(IEnumerable<long> ids)
+        => Query.Where(l => ids.Contains(l.Id));
+}
