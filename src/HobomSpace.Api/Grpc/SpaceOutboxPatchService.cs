@@ -5,6 +5,7 @@ using Outbox.Space;
 
 namespace HobomSpace.Api.Grpc;
 
+/// <summary>Outbox 메시지 상태를 gRPC로 변경하는 서비스 (SENT/FAILED).</summary>
 public sealed class SpaceOutboxPatchService(IOutboxRepository outboxRepo, IUnitOfWork uow)
     : PatchHoBomSpaceOutboxController.PatchHoBomSpaceOutboxControllerBase
 {

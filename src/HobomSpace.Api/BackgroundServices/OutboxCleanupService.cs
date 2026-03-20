@@ -1,7 +1,8 @@
-using HobomSpace.Application.Services;
+using HobomSpace.Application.Ports;
 
 namespace HobomSpace.Api.BackgroundServices;
 
+/// <summary>매일 09:00 UTC에 오래된 Outbox 메시지를 정리하는 백그라운드 서비스.</summary>
 public sealed class OutboxCleanupService(IServiceScopeFactory scopeFactory, ILogger<OutboxCleanupService> logger) : BackgroundService
 {
     private static readonly TimeOnly ScheduledTime = new(9, 0);
@@ -15,8 +16,9 @@ public sealed class OutboxCleanupService(IServiceScopeFactory scopeFactory, ILog
             await Task.Delay(delay, stoppingToken);
 
             using var scope = scopeFactory.CreateScope();
-            var cleaner = scope.ServiceProvider.GetRequiredService<IOutboxCleaner>();
-            await cleaner.CleanupAsync(stoppingToken);
+            var outboxRepo = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
+            var cutoff = DateTime.UtcNow.AddDays(-30);
+            await outboxRepo.DeleteOlderThanAsync(cutoff, 1000, stoppingToken);
         }
     }
 

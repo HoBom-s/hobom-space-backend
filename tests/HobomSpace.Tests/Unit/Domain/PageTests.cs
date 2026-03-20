@@ -1,16 +1,28 @@
 using FluentAssertions;
+using HobomSpace.Domain.Common;
 using HobomSpace.Domain.Entities;
+using HobomSpace.Domain.ValueObjects;
 
 namespace HobomSpace.Tests.Unit.Domain;
 
 public class PageTests
 {
+    private static Space ValidSpace()
+    {
+        var key = SpaceKey.Create("TEST").Value;
+        return Space.Create(key, "Test Space", null).Value;
+    }
+
     [Fact]
     public void Create_WithValidArgs_ReturnsPage()
     {
-        var page = Page.Create(1, null, "Title", "Content", 0);
+        var space = ValidSpace();
 
-        page.SpaceId.Should().Be(1);
+        var result = Page.Create(space, null, "Title", "Content", 0);
+
+        result.IsSuccess.Should().BeTrue();
+        var page = result.Value;
+        page.SpaceId.Should().Be(space.Id);
         page.ParentPageId.Should().BeNull();
         page.Title.Should().Be("Title");
         page.Content.Should().Be("Content");
@@ -21,71 +33,68 @@ public class PageTests
     [Fact]
     public void Create_TrimsTitle()
     {
-        var page = Page.Create(1, null, "  padded  ", "Content");
+        var result = Page.Create(ValidSpace(), null, "  padded  ", "Content");
 
-        page.Title.Should().Be("padded");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Title.Should().Be("padded");
     }
 
     [Fact]
     public void Create_WithParentPageId_SetsValue()
     {
-        var page = Page.Create(1, 99, "Title", "Content");
+        var result = Page.Create(ValidSpace(), 99, "Title", "Content");
 
-        page.ParentPageId.Should().Be(99);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.ParentPageId.Should().Be(99);
     }
 
     [Fact]
     public void Create_WithDefaultPosition_SetsZero()
     {
-        var page = Page.Create(1, null, "Title", "Content");
+        var result = Page.Create(ValidSpace(), null, "Title", "Content");
 
-        page.Position.Should().Be(0);
-    }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void Create_WithInvalidSpaceId_ThrowsArgumentOutOfRangeException(long spaceId)
-    {
-        var act = () => Page.Create(spaceId, null, "Title", "Content");
-
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Position.Should().Be(0);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Create_WithInvalidTitle_ThrowsArgumentException(string? title)
+    public void Create_WithInvalidTitle_ReturnsFailure(string? title)
     {
-        var act = () => Page.Create(1, null, title!, "Content");
+        var result = Page.Create(ValidSpace(), null, title!, "Content");
 
-        act.Should().Throw<ArgumentException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Page.TitleEmpty");
     }
 
     [Fact]
-    public void Create_WithNullContent_ThrowsArgumentNullException()
+    public void Create_WithNullContent_ReturnsFailure()
     {
-        var act = () => Page.Create(1, null, "Title", null!);
+        var result = Page.Create(ValidSpace(), null, "Title", null!);
 
-        act.Should().Throw<ArgumentNullException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Page.ContentNull");
     }
 
     [Fact]
-    public void Create_WithNegativePosition_ThrowsArgumentOutOfRangeException()
+    public void Create_WithNegativePosition_ClampsToZero()
     {
-        var act = () => Page.Create(1, null, "Title", "Content", -1);
+        var result = Page.Create(ValidSpace(), null, "Title", "Content", -1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Position.Should().Be(0);
     }
 
     [Fact]
     public void Update_WithValidArgs_UpdatesFields()
     {
-        var page = Page.Create(1, null, "Old", "Old content");
+        var page = Page.Create(ValidSpace(), null, "Old", "Old content").Value;
 
-        page.Update("New", "New content", 5);
+        var result = page.Update("New", "New content", 5);
 
+        result.IsSuccess.Should().BeTrue();
         page.Title.Should().Be("New");
         page.Content.Should().Be("New content");
         page.Position.Should().Be(5);
@@ -94,20 +103,22 @@ public class PageTests
     [Fact]
     public void Update_WithNullPosition_DoesNotChangePosition()
     {
-        var page = Page.Create(1, null, "Title", "Content", 3);
+        var page = Page.Create(ValidSpace(), null, "Title", "Content", 3).Value;
 
-        page.Update("New", "New content", null);
+        var result = page.Update("New", "New content", null);
 
+        result.IsSuccess.Should().BeTrue();
         page.Position.Should().Be(3);
     }
 
     [Fact]
     public void Update_TrimsTitle()
     {
-        var page = Page.Create(1, null, "Title", "Content");
+        var page = Page.Create(ValidSpace(), null, "Title", "Content").Value;
 
-        page.Update("  trimmed  ", "Content", null);
+        var result = page.Update("  trimmed  ", "Content", null);
 
+        result.IsSuccess.Should().BeTrue();
         page.Title.Should().Be("trimmed");
     }
 
@@ -115,32 +126,35 @@ public class PageTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Update_WithInvalidTitle_ThrowsArgumentException(string? title)
+    public void Update_WithInvalidTitle_ReturnsFailure(string? title)
     {
-        var page = Page.Create(1, null, "Title", "Content");
+        var page = Page.Create(ValidSpace(), null, "Title", "Content").Value;
 
-        var act = () => page.Update(title!, "Content", null);
+        var result = page.Update(title!, "Content", null);
 
-        act.Should().Throw<ArgumentException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Page.TitleEmpty");
     }
 
     [Fact]
-    public void Update_WithNullContent_ThrowsArgumentNullException()
+    public void Update_WithNullContent_ReturnsFailure()
     {
-        var page = Page.Create(1, null, "Title", "Content");
+        var page = Page.Create(ValidSpace(), null, "Title", "Content").Value;
 
-        var act = () => page.Update("Title", null!, null);
+        var result = page.Update("Title", null!, null);
 
-        act.Should().Throw<ArgumentNullException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Page.ContentNull");
     }
 
     [Fact]
-    public void Update_WithNegativePosition_ThrowsArgumentOutOfRangeException()
+    public void Update_WithNegativePosition_ClampsToZero()
     {
-        var page = Page.Create(1, null, "Title", "Content");
+        var page = Page.Create(ValidSpace(), null, "Title", "Content").Value;
 
-        var act = () => page.Update("Title", "Content", -1);
+        var result = page.Update("Title", "Content", -1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        result.IsSuccess.Should().BeTrue();
+        page.Position.Should().Be(0);
     }
 }

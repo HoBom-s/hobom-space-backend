@@ -1,9 +1,19 @@
+using HobomSpace.Domain.Common;
+using HobomSpace.Domain.Events;
+using HobomSpace.Domain.ValueObjects;
+
 namespace HobomSpace.Domain.Entities;
 
-public sealed class Space
+/// <summary>
+/// 문서 협업을 위한 최상위 컨테이너. 프로젝트 또는 팀 단위로 생성된다.
+/// </summary>
+public sealed class Space : AggregateRoot
 {
     public long Id { get; private set; }
+
+    /// <summary>고유 식별 키 (대문자, 최대 32자). URL 경로에 사용된다.</summary>
     public string Key { get; private set; } = string.Empty;
+
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -11,31 +21,35 @@ public sealed class Space
 
     private Space() { }
 
-    public static Space Create(string key, string name, string? description)
+    /// <summary>새 Space를 생성한다. <paramref name="key"/>는 자동으로 대문자 변환된다.</summary>
+    public static Result<Space> Create(SpaceKey key, string name, string? description)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
-        if (key.Length > 32)
-            throw new ArgumentException("Key must be 32 characters or less.", nameof(key));
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure<Space>(DomainErrors.Space.NameEmpty);
 
         var now = DateTime.UtcNow;
-        return new Space
+        var space = new Space
         {
-            Key = key.ToUpperInvariant(),
+            Key = key,
             Name = name.Trim(),
             Description = description?.Trim(),
             CreatedAt = now,
             UpdatedAt = now,
         };
+
+        space.RaiseDomainEvent(new SpaceCreatedEvent(space.Id, space.Key, space.Name, null));
+        return space;
     }
 
-    public void Update(string name, string? description)
+    /// <summary>Space 이름과 설명을 변경한다.</summary>
+    public Result Update(string name, string? description)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure(DomainErrors.Space.NameEmpty);
 
         Name = name.Trim();
         Description = description?.Trim();
         UpdatedAt = DateTime.UtcNow;
+        return Result.Success();
     }
 }

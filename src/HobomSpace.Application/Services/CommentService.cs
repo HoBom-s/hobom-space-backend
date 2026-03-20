@@ -1,70 +1,77 @@
-using System.Text.Json;
 using HobomSpace.Application.Models;
 using HobomSpace.Application.Ports;
+using HobomSpace.Application.Specifications;
+using HobomSpace.Domain.Common;
 using HobomSpace.Domain.Entities;
-using HobomSpace.Domain.Exceptions;
 
 namespace HobomSpace.Application.Services;
 
+/// <summary>댓글 CRUD 연산을 정의한다. 대댓글(스레드)을 지원한다.</summary>
 public interface ICommentService
 {
-    Task<Comment> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId = null, CancellationToken ct = default);
+    /// <summary>페이지에 새 댓글을 생성한다. 부모 댓글 지정 시 대댓글이 된다.</summary>
+    Task<Result<Comment>> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId, CancellationToken ct = default);
+
+    /// <summary>댓글 본문을 수정한다.</summary>
+    Task<Result<Comment>> UpdateAsync(long commentId, string content, CancellationToken ct = default);
+
+    /// <summary>댓글을 삭제한다.</summary>
+    Task<Result> DeleteAsync(long commentId, CancellationToken ct = default);
+
+    /// <summary>페이지에 달린 댓글 목록을 페이지네이션하여 조회한다.</summary>
     Task<PaginatedResult<Comment>> GetByPageIdAsync(long pageId, int offset, int limit, CancellationToken ct = default);
-    Task<Comment> UpdateAsync(long commentId, string content, CancellationToken ct = default);
-    Task DeleteAsync(long commentId, CancellationToken ct = default);
 }
 
-public sealed class CommentService(
-    ICommentRepository commentRepo,
-    IPageRepository pageRepo,
-    IOutboxRepository outboxRepo,
-    IUnitOfWork unitOfWork) : ICommentService
+/// <summary>댓글 CRUD 서비스 구현체.</summary>
+public sealed class CommentService(IRepository<Page> pageRepo, IRepository<Comment> commentRepo, IUnitOfWork uow) : ICommentService
 {
-    public async Task<Comment> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId = null, CancellationToken ct = default)
+    public async Task<Result<Comment>> CreateAsync(string spaceKey, long pageId, long? parentCommentId, string content, string? author, string? actorId, CancellationToken ct)
     {
-        _ = await pageRepo.GetByIdAsync(pageId, ct)
-            ?? throw new NotFoundException($"Page {pageId} not found.");
+        var page = await pageRepo.FirstOrDefaultAsync(new PageByIdSpec(pageId), ct);
+        if (page is null) return Result.Failure<Comment>(DomainErrors.Page.NotFound(pageId));
 
         if (parentCommentId.HasValue)
         {
-            var parent = await commentRepo.GetByIdAsync(parentCommentId.Value, ct)
-                ?? throw new NotFoundException($"Parent comment {parentCommentId} not found.");
-            if (parent.PageId != pageId)
-                throw new ArgumentException("Parent comment does not belong to the specified page.");
+            var parent = await commentRepo.FirstOrDefaultAsync(new CommentByIdSpec(parentCommentId.Value), ct);
+            if (parent is null) return Result.Failure<Comment>(DomainErrors.Comment.ParentNotFound(parentCommentId.Value));
+            if (parent.PageId != pageId) return Result.Failure<Comment>(DomainErrors.Comment.ParentOnDifferentPage);
         }
 
-        var comment = Comment.Create(pageId, parentCommentId, content, author);
-        await commentRepo.AddAsync(comment, ct);
-        await outboxRepo.AddAsync(OutboxMessage.Create("SPACE_EVENT",
-            JsonSerializer.Serialize(new { entityType = "COMMENT", action = "CREATED", spaceKey, pageId, title = content.Length > 100 ? content[..100] : content, actorId = actorId ?? "" })), ct);
-        await unitOfWork.SaveChangesAsync(ct);
+        var commentResult = Comment.Create(page, parentCommentId, content, author, spaceKey, actorId);
+        if (commentResult.IsFailure) return Result.Failure<Comment>(commentResult.Error);
+
+        await commentRepo.AddAsync(commentResult.Value, ct);
+        await uow.SaveChangesAsync(ct);
+        return commentResult;
+    }
+
+    public async Task<Result<Comment>> UpdateAsync(long commentId, string content, CancellationToken ct)
+    {
+        var comment = await commentRepo.FirstOrDefaultAsync(new CommentByIdSpec(commentId), ct);
+        if (comment is null) return Result.Failure<Comment>(DomainErrors.Comment.NotFound(commentId));
+
+        var result = comment.Update(content);
+        if (result.IsFailure) return Result.Failure<Comment>(result.Error);
+
+        await uow.SaveChangesAsync(ct);
         return comment;
     }
 
-    public async Task<PaginatedResult<Comment>> GetByPageIdAsync(long pageId, int offset, int limit, CancellationToken ct = default)
+    public async Task<Result> DeleteAsync(long commentId, CancellationToken ct)
+    {
+        var comment = await commentRepo.FirstOrDefaultAsync(new CommentByIdSpec(commentId), ct);
+        if (comment is null) return Result.Failure(DomainErrors.Comment.NotFound(commentId));
+
+        await commentRepo.DeleteAsync(comment, ct);
+        await uow.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+
+    public async Task<PaginatedResult<Comment>> GetByPageIdAsync(long pageId, int offset, int limit, CancellationToken ct)
     {
         (offset, limit) = PaginatedResult<Comment>.Clamp(offset, limit);
-        var items = await commentRepo.GetByPageIdAsync(pageId, offset, limit, ct);
-        var total = await commentRepo.CountByPageIdAsync(pageId, ct);
+        var items = await commentRepo.ListAsync(new CommentsByPageIdSpec(pageId, offset, limit), ct);
+        var total = await commentRepo.CountAsync(new CommentCountByPageIdSpec(pageId), ct);
         return new PaginatedResult<Comment>(items, total, offset, limit);
     }
-
-    public async Task<Comment> UpdateAsync(long commentId, string content, CancellationToken ct = default)
-    {
-        var comment = await GetCommentAsyncById(commentId, ct);
-        comment.Update(content);
-        await unitOfWork.SaveChangesAsync(ct);
-        return comment;
-    }
-
-    public async Task DeleteAsync(long commentId, CancellationToken ct = default)
-    {
-        var comment = await GetCommentAsyncById(commentId, ct);
-        commentRepo.Remove(comment);
-        await unitOfWork.SaveChangesAsync(ct);
-    }
-
-    private async Task<Comment> GetCommentAsyncById(long commentId, CancellationToken ct = default)
-        => await commentRepo.GetByIdAsync(commentId, ct)
-            ?? throw new NotFoundException($"Comment with id {commentId} not found");
 }

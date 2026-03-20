@@ -54,4 +54,29 @@ public sealed class PageRepository(AppDbContext db) : IPageRepository
 
     public void Remove(Page page)
         => db.Pages.Remove(page);
+
+    public async Task<Page?> GetDeletedByIdAsync(long id, CancellationToken ct = default)
+        => await db.Pages.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt != null, ct);
+
+    public async Task<List<Page>> GetDeletedBySpaceIdAsync(long spaceId, int offset, int limit, CancellationToken ct = default)
+        => await db.Pages.IgnoreQueryFilters()
+            .Where(p => p.SpaceId == spaceId && p.DeletedAt != null)
+            .OrderByDescending(p => p.DeletedAt)
+            .Skip(offset).Take(limit)
+            .ToListAsync(ct);
+
+    public async Task<int> CountDeletedBySpaceIdAsync(long spaceId, CancellationToken ct = default)
+        => await db.Pages.IgnoreQueryFilters()
+            .CountAsync(p => p.SpaceId == spaceId && p.DeletedAt != null, ct);
+
+    public async Task<int> PurgeDeletedOlderThanAsync(DateTime cutoff, int batchSize, CancellationToken ct = default)
+    {
+        var pages = await db.Pages.IgnoreQueryFilters()
+            .Where(p => p.DeletedAt != null && p.DeletedAt < cutoff)
+            .Take(batchSize)
+            .ToListAsync(ct);
+        db.Pages.RemoveRange(pages);
+        await db.SaveChangesAsync(ct);
+        return pages.Count;
+    }
 }

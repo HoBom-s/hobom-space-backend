@@ -76,4 +76,36 @@ public class OutboxMessageTests
 
         act.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void MarkAsSent_UpdatesUpdatedAt()
+    {
+        var outbox = OutboxMessage.Create("SPACE_EVENT", """{"test":true}""");
+        var before = outbox.UpdatedAt;
+
+        outbox.MarkAsSent();
+
+        outbox.UpdatedAt.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public void MarkAsFailed_UpdatesUpdatedAt()
+    {
+        var outbox = OutboxMessage.Create("SPACE_EVENT", """{"test":true}""");
+        var before = outbox.UpdatedAt;
+
+        outbox.MarkAsFailed("error");
+
+        outbox.UpdatedAt.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public void Create_SetsPayloadCorrectly()
+    {
+        var payload = """{"entityType":"PAGE","action":"CREATED"}""";
+
+        var outbox = OutboxMessage.Create("SPACE_EVENT", payload);
+
+        outbox.Payload.Should().Be(payload);
+    }
 }
