@@ -38,7 +38,7 @@ public class PageVersionApiTests(IntegrationTestFixture fixture)
         await _client.PutAsJsonAsync($"/api/v1/spaces/VR2/pages/{page!.Items!.Id}",
             new UpdatePageRequest("Updated", "New", null));
 
-        var response = await _client.GetAsync($"/api/v1/spaces/VR2/pages/{page.Items.Id}/versions/0");
+        var response = await _client.GetAsync($"/api/v1/spaces/VR2/pages/{page.Items.Id}/versions/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ApiResponse<PageVersionResponse>>();
@@ -56,7 +56,7 @@ public class PageVersionApiTests(IntegrationTestFixture fixture)
             new UpdatePageRequest("Changed", "Changed Content", null));
 
         var response = await _client.PostAsync(
-            $"/api/v1/spaces/VR3/pages/{page.Items.Id}/versions/0/restore", null);
+            $"/api/v1/spaces/VR3/pages/{page.Items.Id}/versions/1/restore", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -68,11 +68,15 @@ public class PageVersionApiTests(IntegrationTestFixture fixture)
         var pageResp = await _client.PostAsJsonAsync("/api/v1/spaces/VR4/pages",
             new CreatePageRequest("Diff Title", "Line1\nLine2", null));
         var page = await pageResp.Content.ReadFromJsonAsync<ApiResponse<PageResponse>>();
+        // first update → creates version 1 snapshot
         await _client.PutAsJsonAsync($"/api/v1/spaces/VR4/pages/{page!.Items!.Id}",
             new UpdatePageRequest("Diff Title", "Line1\nLine3", null));
+        // second update → creates version 2 snapshot
+        await _client.PutAsJsonAsync($"/api/v1/spaces/VR4/pages/{page.Items.Id}",
+            new UpdatePageRequest("Diff Title V3", "Line1\nLine4", null));
 
         var response = await _client.GetAsync(
-            $"/api/v1/spaces/VR4/pages/{page.Items.Id}/versions/diff?from=0&to=1");
+            $"/api/v1/spaces/VR4/pages/{page.Items.Id}/versions/diff?from=1&to=2");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
