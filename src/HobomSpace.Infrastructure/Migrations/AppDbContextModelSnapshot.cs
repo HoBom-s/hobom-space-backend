@@ -130,6 +130,45 @@ namespace HobomSpace.Infrastructure.Migrations
                     b.ToTable("error_events", "space");
                 });
 
+            modelBuilder.Entity("HobomSpace.Domain.Entities.Label", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("color");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.Property<long>("SpaceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("space_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_labels");
+
+                    b.HasIndex("SpaceId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_labels_space_id_name");
+
+                    b.ToTable("labels", "space");
+                });
+
             modelBuilder.Entity("HobomSpace.Domain.Entities.OutboxMessage", b =>
                 {
                     b.Property<long>("Id")
@@ -221,6 +260,15 @@ namespace HobomSpace.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("deleted_by");
+
                     b.Property<long?>("ParentPageId")
                         .HasColumnType("bigint")
                         .HasColumnName("parent_page_id");
@@ -248,6 +296,9 @@ namespace HobomSpace.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_pages");
 
+                    b.HasIndex("DeletedAt")
+                        .HasDatabaseName("ix_pages_deleted_at");
+
                     b.HasIndex("ParentPageId")
                         .HasDatabaseName("ix_pages_parent_page_id");
 
@@ -255,6 +306,40 @@ namespace HobomSpace.Infrastructure.Migrations
                         .HasDatabaseName("ix_pages_space_id");
 
                     b.ToTable("pages", "space");
+                });
+
+            modelBuilder.Entity("HobomSpace.Domain.Entities.PageLabel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("LabelId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("label_id");
+
+                    b.Property<long>("PageId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("page_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_page_labels");
+
+                    b.HasIndex("LabelId")
+                        .HasDatabaseName("ix_page_labels_label_id");
+
+                    b.HasIndex("PageId", "LabelId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_page_labels_page_id_label_id");
+
+                    b.ToTable("page_labels", "space");
                 });
 
             modelBuilder.Entity("HobomSpace.Domain.Entities.PageVersion", b =>
@@ -364,6 +449,16 @@ namespace HobomSpace.Infrastructure.Migrations
                         .HasConstraintName("fk_comments_comments_parent_comment_id");
                 });
 
+            modelBuilder.Entity("HobomSpace.Domain.Entities.Label", b =>
+                {
+                    b.HasOne("HobomSpace.Domain.Entities.Space", null)
+                        .WithMany()
+                        .HasForeignKey("SpaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_labels_spaces_space_id");
+                });
+
             modelBuilder.Entity("HobomSpace.Domain.Entities.Page", b =>
                 {
                     b.HasOne("HobomSpace.Domain.Entities.Page", null)
@@ -378,6 +473,23 @@ namespace HobomSpace.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_pages_spaces_space_id");
+                });
+
+            modelBuilder.Entity("HobomSpace.Domain.Entities.PageLabel", b =>
+                {
+                    b.HasOne("HobomSpace.Domain.Entities.Label", null)
+                        .WithMany()
+                        .HasForeignKey("LabelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_page_labels_labels_label_id");
+
+                    b.HasOne("HobomSpace.Domain.Entities.Page", null)
+                        .WithMany()
+                        .HasForeignKey("PageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_page_labels_pages_page_id");
                 });
 
             modelBuilder.Entity("HobomSpace.Domain.Entities.PageVersion", b =>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HobomSpace.Api.Middleware;
 
+/// <summary>X-Api-Key 헤더로 API 인증을 수행하는 미들웨어. health/openapi/scalar 경로와 gRPC 요청은 제외.</summary>
 public sealed class ApiKeyMiddleware(RequestDelegate next, IConfiguration configuration)
 {
     private const string ApiKeyHeader = "X-Api-Key";

@@ -5,7 +5,9 @@ using HobomSpace.Api.Grpc;
 using HobomSpace.Api.Middleware;
 using HobomSpace.Application;
 using HobomSpace.Infrastructure;
+using HobomSpace.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -53,6 +55,7 @@ try
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddHostedService<OutboxCleanupService>();
+    builder.Services.AddHostedService<TrashPurgeService>();
 
     var healthChecks = builder.Services.AddHealthChecks();
     var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -112,6 +115,14 @@ try
 
     var app = builder.Build();
 
+    if (!app.Configuration.GetValue<bool>("SkipMigration"))
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+        Log.Information("Database migration completed");
+    }
+
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -146,6 +157,8 @@ try
     app.MapPageEndpoints().RequireRateLimiting("fixed");
     app.MapPageVersionEndpoints().RequireRateLimiting("fixed");
     app.MapCommentEndpoints().RequireRateLimiting("fixed");
+    app.MapTrashEndpoints().RequireRateLimiting("fixed");
+    app.MapLabelEndpoints().RequireRateLimiting("fixed");
     app.MapSearchEndpoints().RequireRateLimiting("fixed");
     app.MapErrorEndpoints().RequireRateLimiting("fixed");
     app.MapGrpcService<SpaceOutboxFindService>();

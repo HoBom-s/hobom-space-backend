@@ -4,6 +4,7 @@ using HobomSpace.Domain.Entities;
 
 namespace HobomSpace.Api.Middleware;
 
+/// <summary>API 요청/응답을 Outbox에 SPACE_LOG로 기록하는 미들웨어. gRPC와 내부 경로는 제외.</summary>
 public sealed class ApiLoggingMiddleware(RequestDelegate next)
 {
     private static readonly HashSet<string> ExcludedPrefixes =

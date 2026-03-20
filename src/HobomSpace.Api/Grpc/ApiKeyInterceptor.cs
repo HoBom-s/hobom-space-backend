@@ -5,6 +5,7 @@ using Grpc.Core.Interceptors;
 
 namespace HobomSpace.Api.Grpc;
 
+/// <summary>gRPC 요청에 대한 API key 인증을 수행하는 인터셉터.</summary>
 public sealed class ApiKeyInterceptor(IConfiguration configuration) : Interceptor
 {
     private const string ApiKeyHeader = "x-api-key";

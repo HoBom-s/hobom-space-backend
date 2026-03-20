@@ -1,5 +1,6 @@
 namespace HobomSpace.Api.Middleware;
 
+/// <summary>요청에 고유 Trace ID를 부여하고 Serilog LogContext에 주입하는 미들웨어.</summary>
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
     private const string Header = "x-hobom-trace-id";

@@ -5,6 +5,7 @@ using Outbox.Space;
 
 namespace HobomSpace.Api.Grpc;
 
+/// <summary>SPACE_EVENT Outbox 메시지를 gRPC로 조회하는 서비스.</summary>
 public sealed class SpaceOutboxFindService(IOutboxRepository outboxRepo)
     : FindHoBomSpaceOutboxController.FindHoBomSpaceOutboxControllerBase
 {

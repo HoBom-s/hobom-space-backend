@@ -26,6 +26,12 @@ public sealed class PageConfiguration : IEntityTypeConfiguration<Page>
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
 
+        builder.Property(p => p.DeletedAt);
+        builder.Property(p => p.DeletedBy).HasMaxLength(255);
+        builder.HasIndex(p => p.DeletedAt);
+
+        builder.HasQueryFilter(p => p.DeletedAt == null);
+
         builder.HasOne<Space>()
             .WithMany()
             .HasForeignKey(p => p.SpaceId)

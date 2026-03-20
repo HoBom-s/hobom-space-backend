@@ -1,5 +1,6 @@
 namespace HobomSpace.Api.Middleware;
 
+/// <summary>보안 관련 HTTP 응답 헤더를 추가하는 미들웨어.</summary>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)

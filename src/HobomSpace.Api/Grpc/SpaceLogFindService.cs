@@ -5,6 +5,7 @@ using Outbox.Log;
 
 namespace HobomSpace.Api.Grpc;
 
+/// <summary>SPACE_LOG Outbox 메시지를 gRPC로 조회하는 서비스.</summary>
 public sealed class SpaceLogFindService(IOutboxRepository outboxRepo)
     : FindHoBomLogOutboxController.FindHoBomLogOutboxControllerBase
 {

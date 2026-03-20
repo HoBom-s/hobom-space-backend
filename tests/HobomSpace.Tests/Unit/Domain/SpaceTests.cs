@@ -1,15 +1,21 @@
 using FluentAssertions;
+using HobomSpace.Domain.Common;
 using HobomSpace.Domain.Entities;
+using HobomSpace.Domain.ValueObjects;
 
 namespace HobomSpace.Tests.Unit.Domain;
 
 public class SpaceTests
 {
+    private static SpaceKey ValidKey(string key = "DEV") => SpaceKey.Create(key).Value;
+
     [Fact]
     public void Create_WithValidArgs_ReturnsSpace()
     {
-        var space = Space.Create("dev", "Development", "Dev space");
+        var result = Space.Create(ValidKey("dev"), "Development", "Dev space");
 
+        result.IsSuccess.Should().BeTrue();
+        var space = result.Value;
         space.Key.Should().Be("DEV");
         space.Name.Should().Be("Development");
         space.Description.Should().Be("Dev space");
@@ -20,68 +26,52 @@ public class SpaceTests
     [Fact]
     public void Create_UppercasesKey()
     {
-        var space = Space.Create("abc", "Name", null);
+        var result = Space.Create(ValidKey("abc"), "Name", null);
 
-        space.Key.Should().Be("ABC");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Key.Should().Be("ABC");
     }
 
     [Fact]
     public void Create_TrimsNameAndDescription()
     {
-        var space = Space.Create("KEY", "  padded  ", "  desc  ");
+        var result = Space.Create(ValidKey("KEY"), "  padded  ", "  desc  ");
 
-        space.Name.Should().Be("padded");
-        space.Description.Should().Be("desc");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Name.Should().Be("padded");
+        result.Value.Description.Should().Be("desc");
     }
 
     [Fact]
     public void Create_WithNullDescription_SetsNull()
     {
-        var space = Space.Create("KEY", "Name", null);
+        var result = Space.Create(ValidKey(), "Name", null);
 
-        space.Description.Should().BeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Description.Should().BeNull();
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Create_WithInvalidKey_ThrowsArgumentException(string? key)
+    public void Create_WithInvalidName_ReturnsFailure(string? name)
     {
-        var act = () => Space.Create(key!, "Name", null);
+        var result = Space.Create(ValidKey(), name!, null);
 
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void Create_WithKeyOver32Chars_ThrowsArgumentException()
-    {
-        var longKey = new string('A', 33);
-
-        var act = () => Space.Create(longKey, "Name", null);
-
-        act.Should().Throw<ArgumentException>().WithMessage("*32*");
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Create_WithInvalidName_ThrowsArgumentException(string? name)
-    {
-        var act = () => Space.Create("KEY", name!, null);
-
-        act.Should().Throw<ArgumentException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Space.NameEmpty");
     }
 
     [Fact]
     public void Update_WithValidArgs_UpdatesFields()
     {
-        var space = Space.Create("KEY", "Old", "Old desc");
+        var space = Space.Create(ValidKey(), "Old", "Old desc").Value;
         var createdAt = space.CreatedAt;
 
-        space.Update("New", "New desc");
+        var result = space.Update("New", "New desc");
 
+        result.IsSuccess.Should().BeTrue();
         space.Name.Should().Be("New");
         space.Description.Should().Be("New desc");
         space.UpdatedAt.Should().BeOnOrAfter(createdAt);
@@ -90,10 +80,11 @@ public class SpaceTests
     [Fact]
     public void Update_TrimsValues()
     {
-        var space = Space.Create("KEY", "Name", null);
+        var space = Space.Create(ValidKey(), "Name", null).Value;
 
-        space.Update("  trimmed  ", "  desc  ");
+        var result = space.Update("  trimmed  ", "  desc  ");
 
+        result.IsSuccess.Should().BeTrue();
         space.Name.Should().Be("trimmed");
         space.Description.Should().Be("desc");
     }
@@ -102,12 +93,13 @@ public class SpaceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Update_WithInvalidName_ThrowsArgumentException(string? name)
+    public void Update_WithInvalidName_ReturnsFailure(string? name)
     {
-        var space = Space.Create("KEY", "Name", null);
+        var space = Space.Create(ValidKey(), "Name", null).Value;
 
-        var act = () => space.Update(name!, null);
+        var result = space.Update(name!, null);
 
-        act.Should().Throw<ArgumentException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Space.NameEmpty");
     }
 }
