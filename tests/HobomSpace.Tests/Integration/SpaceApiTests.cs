@@ -19,9 +19,9 @@ public class SpaceApiTests(IntegrationTestFixture fixture)
         var response = await _client.PostAsJsonAsync("/api/v1/spaces", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<SpaceResponse>();
-        body!.Key.Should().Be("INT");
-        body.Name.Should().Be("Integration");
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<SpaceResponse>>();
+        body!.Items!.Key.Should().Be("INT");
+        body.Items.Name.Should().Be("Integration");
     }
 
     [Fact]
@@ -59,18 +59,18 @@ public class SpaceApiTests(IntegrationTestFixture fixture)
         var response = await _client.PutAsJsonAsync("/api/v1/spaces/UPD", new UpdateSpaceRequest("Updated", "New desc"));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<SpaceResponse>();
-        body!.Name.Should().Be("Updated");
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<SpaceResponse>>();
+        body!.Items!.Name.Should().Be("Updated");
     }
 
     [Fact]
-    public async Task DeleteSpace_ReturnsNoContent()
+    public async Task DeleteSpace_ReturnsOk()
     {
         await _client.PostAsJsonAsync("/api/v1/spaces", new CreateSpaceRequest("DEL", "To Delete", null));
 
         var response = await _client.DeleteAsync("/api/v1/spaces/DEL");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

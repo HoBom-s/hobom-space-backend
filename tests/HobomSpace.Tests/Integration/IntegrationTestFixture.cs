@@ -1,4 +1,5 @@
 using HobomSpace.Infrastructure.Persistence;
+using HobomSpace.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ public class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixtu
 
 public class IntegrationTestFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+        .WithImage("postgres:17-alpine")
         .Build();
 
     public HttpClient HttpClient { get; private set; } = null!;
@@ -28,13 +30,15 @@ public class IntegrationTestFixture : WebApplicationFactory<Program>, IAsyncLife
                 d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
             if (descriptor != null) services.Remove(descriptor);
 
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContext<AppDbContext>((sp, options) =>
                 options.UseNpgsql(_postgres.GetConnectionString())
-                       .UseSnakeCaseNamingConvention());
+                       .UseSnakeCaseNamingConvention()
+                       .AddInterceptors(sp.GetRequiredService<DomainEventInterceptor>()));
         });
 
         builder.UseSetting("Security:ApiKey", "test-api-key");
         builder.UseSetting("ConnectionStrings:DefaultConnection", "unused");
+        builder.UseSetting("SkipMigration", "true");
     }
 
     public async Task InitializeAsync()
