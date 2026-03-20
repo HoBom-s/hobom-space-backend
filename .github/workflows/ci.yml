@@ -35,7 +35,12 @@ jobs:
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Integration tests
-        run: dotnet test --no-build --configuration Release --verbosity normal --filter "Category=Integration"
+        run: >
+          dotnet test --no-build --configuration Release --verbosity normal
+          --filter "Category=Integration"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
