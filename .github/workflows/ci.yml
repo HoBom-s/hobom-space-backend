@@ -42,11 +42,17 @@ jobs:
           --results-directory ./TestResults
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
+      - name: Merge coverage files
+        if: always()
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:./MergedCoverage -reporttypes:Cobertura
+
       - name: Coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
         if: always()
         with:
-          filename: TestResults/**/coverage.cobertura.xml
+          filename: MergedCoverage/Cobertura.xml
           badge: true
           format: markdown
           output: both
@@ -66,7 +72,7 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: TestResults/**/coverage.cobertura.xml
+          path: MergedCoverage/Cobertura.xml
           retention-days: 14
 
       - name: Check pending migrations
