@@ -149,13 +149,10 @@ public sealed class LabelService(
         if (label.SpaceId != space.Id) return Result.Failure<List<Page>>(DomainErrors.Label.NotInSpace(labelId));
 
         var pageLabels = await pageLabelRepo.ListAsync(new PageIdsByLabelIdSpec(labelId), ct);
-        var pages = new List<Page>();
-        foreach (var pl in pageLabels)
-        {
-            var page = await pageRepo.FirstOrDefaultAsync(new PageByIdSpec(pl.PageId), ct);
-            if (page is not null)
-                pages.Add(page);
-        }
+        var pageIds = pageLabels.Select(pl => pl.PageId).Distinct().ToList();
+        if (pageIds.Count == 0) return new List<Page>();
+
+        var pages = await pageRepo.ListAsync(new PagesByIdsSpec(pageIds), ct);
         return pages;
     }
 

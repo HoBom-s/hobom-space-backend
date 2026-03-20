@@ -59,6 +59,11 @@ public sealed class SearchPagesBySpaceIdCountSpec : Specification<Page>
     }
 }
 
+public sealed class PagesByIdsSpec : Specification<Page>
+{
+    public PagesByIdsSpec(IEnumerable<long> ids) => Query.Where(p => ids.Contains(p.Id));
+}
+
 public sealed class DeletedPageByIdSpec : Specification<Page>, ISingleResultSpecification<Page>
 {
     public DeletedPageByIdSpec(long id) => Query.Where(p => p.Id == id && p.DeletedAt != null).IgnoreQueryFilters();

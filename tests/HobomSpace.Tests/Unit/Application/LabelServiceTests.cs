@@ -230,8 +230,8 @@ public class LabelServiceTests
             .Returns(label);
         _pageLabelRepo.ListAsync(Arg.Any<ISpecification<PageLabel>>(), Arg.Any<CancellationToken>())
             .Returns(new List<PageLabel> { pageLabel });
-        _pageRepo.FirstOrDefaultAsync(Arg.Any<ISpecification<Page>>(), Arg.Any<CancellationToken>())
-            .Returns(page);
+        _pageRepo.ListAsync(Arg.Any<ISpecification<Page>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<Page> { page });
 
         var result = await _sut.GetPagesByLabelAsync("DEV", 1);
 

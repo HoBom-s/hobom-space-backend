@@ -94,6 +94,6 @@ public static class PageEndpoints
 
     private static List<LabelSummary> ToSummaries(Dictionary<long, List<Label>> labelMap, long pageId) =>
         labelMap.TryGetValue(pageId, out var labels)
-            ? labels.Select(l => new LabelSummary(l.Id, l.Name, l.Color)).ToList()
+            ? labels.OrderBy(l => l.Name).Select(l => new LabelSummary(l.Id, l.Name, l.Color)).ToList()
             : [];
 }
