@@ -10,5 +10,8 @@ hobomPipeline(
   submodules:     false,
   extraPorts:     ['50052:50052'],
   extraVolumes:   ['/home/infra-admin/certs:/etc/grpc-tls:ro'],
-  smokeCheckPath: '/health/live'
+  smokeCheckPath: '/health/live',
+  liveHostPort:   '18083',
+  liveEnvPath:    '/etc/hobom-live/live-hobom-space-backend/.env',
+  liveExtraPorts: ['50062:50052']
 )
